@@ -62,7 +62,7 @@ export default function AuthPage() {
     setForgotLoading(true)
     setForgotMessage('')
     const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: 'https://rental-marketplace-red.vercel.app/auth',
+      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth` : undefined,
     })
     if (error) setForgotMessage('❌ ' + error.message)
     else setForgotMessage('✅ ส่ง Email รีเซ็ตรหัสผ่านแล้ว! กรุณาตรวจสอบ Email')
@@ -80,9 +80,9 @@ export default function AuthPage() {
   const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-orange-400 text-gray-800 bg-white"
 
   const roles: { value: Role; label: string; desc: string }[] = [
-    { value: 'renter', label: '🔍 ผู้เช่า', desc: 'ฉันต้องการเช่าสิ่งของ' },
-    { value: 'owner', label: '🏠 ผู้ปล่อยเช่า', desc: 'ฉันต้องการลงประกาศ' },
-    { value: 'both', label: '✨ ทั้งสองอย่าง', desc: 'เช่าและปล่อยเช่า' },
+    { value: 'renter', label: '🧳 นักท่องเที่ยว', desc: 'หาที่พัก / ไกด์' },
+    { value: 'owner', label: '🏡 เจ้าของที่พัก', desc: 'ลงประกาศที่พัก' },
+    { value: 'both', label: '✨ ทั้งสองอย่าง', desc: 'หาและลงประกาศ' },
   ]
 
   // หน้า Forgot Password
@@ -167,7 +167,7 @@ export default function AuthPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-600 mb-2 block">คุณต้องการใช้งานในฐานะ?</label>
+                <label className="text-sm text-gray-600 mb-2 block">สมัครเป็น?</label>
                 <div className="grid grid-cols-3 gap-2">
                   {roles.map((r) => (
                     <button
