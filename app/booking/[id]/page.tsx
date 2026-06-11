@@ -114,7 +114,7 @@ export default function BookingPage({ params }: { params: { id: string } }) {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      if (!user) { window.location.href = '/auth'; return }
+      if (!user) { window.location.href = `/auth?next=/booking/${params.id}`; return }
 
       const { data } = await supabase.from('listings').select('*').eq('id', params.id).single()
       setListing(data)

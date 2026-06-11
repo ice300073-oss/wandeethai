@@ -3,14 +3,10 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-type Role = 'renter' | 'owner' | 'both'
-
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [role, setRole] = useState<Role>('both')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -23,25 +19,22 @@ export default function AuthPage() {
     setLoading(true)
     setMessage('')
 
+    // login เสร็จ พากลับไปหน้าที่ผู้ใช้ตั้งใจจะไป (เช่น หน้าจอง) ถ้ามี ?next=
+    const nextUrl = new URLSearchParams(window.location.search).get('next') || '/'
+
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setMessage('❌ ' + error.message)
       else {
         setMessage('✅ เข้าสู่ระบบสำเร็จ!')
-        window.location.href = '/'
+        window.location.href = nextUrl
       }
     } else {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } }
-      })
+      // สมัครแบบเร็ว: ขอแค่ email + password (ชื่อ/บทบาท ค่อยกรอกทีหลังในโปรไฟล์)
+      const { error } = await supabase.auth.signUp({ email, password })
       if (error) {
         setMessage('❌ ' + error.message)
       } else {
-        if (data.user) {
-          await supabase.from('profiles').upsert({ id: data.user.id, role })
-        }
         setMessage('✅ สมัครสำเร็จ! กรุณาตรวจสอบ Email เพื่อยืนยัน')
         setTimeout(() => {
           setIsLogin(true)
@@ -78,12 +71,6 @@ export default function AuthPage() {
   }
 
   const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-orange-400 text-gray-800 bg-white"
-
-  const roles: { value: Role; label: string; desc: string }[] = [
-    { value: 'renter', label: '🧳 นักท่องเที่ยว', desc: 'หาที่พัก / ไกด์' },
-    { value: 'owner', label: '🏡 เจ้าของที่พัก', desc: 'ลงประกาศที่พัก' },
-    { value: 'both', label: '✨ ทั้งสองอย่าง', desc: 'หาและลงประกาศ' },
-  ]
 
   // หน้า Forgot Password
   if (showForgot) {
@@ -153,40 +140,9 @@ export default function AuthPage() {
 
         <div className="space-y-4">
           {!isLogin && (
-            <>
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block">ชื่อ-นามสกุล</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="กรอกชื่อ-นามสกุล"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-600 mb-2 block">สมัครเป็น?</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {roles.map((r) => (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => setRole(r.value)}
-                      className={`p-3 rounded-xl border-2 text-center transition-all ${
-                        role === r.value
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-orange-200'
-                      }`}>
-                      <div className="text-lg mb-1">{r.label.split(' ')[0]}</div>
-                      <div className="text-xs font-medium text-gray-700">{r.label.split(' ').slice(1).join(' ')}</div>
-                      <div className="text-xs text-gray-400 mt-0.5 leading-tight">{r.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
+            <p className="text-xs text-gray-400 bg-orange-50 rounded-lg px-3 py-2 text-center">
+              สมัครเร็วๆ แค่อีเมล + รหัสผ่าน — ชื่อและบทบาทค่อยกรอกทีหลังในโปรไฟล์ได้
+            </p>
           )}
 
           <div>
