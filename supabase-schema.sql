@@ -6,6 +6,16 @@
 
 create extension if not exists "uuid-ossp";
 
+-- ---------- RESET: ลบตารางเก่า (ถ้ามี) เพื่อสร้างใหม่ให้สะอาด ----------
+-- ⚠️ ลบข้อมูลในตารางเหล่านี้ทั้งหมด — ใช้ได้เพราะเป็น project ใหม่ยังไม่มีข้อมูลจริง
+drop table if exists listing_views cascade;
+drop table if exists messages       cascade;
+drop table if exists comments       cascade;
+drop table if exists reviews        cascade;
+drop table if exists bookings       cascade;
+drop table if exists listings       cascade;
+drop table if exists profiles       cascade;
+
 -- ---------- PROFILES ----------
 create table if not exists profiles (
   id          uuid primary key references auth.users on delete cascade,
