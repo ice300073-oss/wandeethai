@@ -1,27 +1,33 @@
 import { Search, SlidersHorizontal } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import ListingCard from '@/components/ListingCard'
-import { createClient } from '@/lib/supabase'
+import { createServerReadClient } from '@/lib/supabase'
 
 const PROVINCES = [
   'ทั้งหมด','เชียงใหม่','กรุงเทพฯ','ภูเก็ต','กระบี่','เชียงราย',
   'ขอนแก่น','นครราชสีมา','สุราษฎร์ธานี','อยุธยา','น่าน','แม่ฮ่องสอน',
 ]
 
+export const dynamic = 'force-dynamic'
+
 async function getListings(province?: string) {
-  const supabase = createClient()
-  let query = supabase
-    .from('listings')
-    .select('*, categories(name, slug)')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
+  try {
+    const supabase = createServerReadClient()
+    let query = supabase
+      .from('listings')
+      .select('*, categories(name, slug)')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
 
-  if (province && province !== 'ทั้งหมด') {
-    query = query.eq('province', province)
+    if (province && province !== 'ทั้งหมด') {
+      query = query.eq('province', province)
+    }
+
+    const { data } = await query.limit(24)
+    return data ?? []
+  } catch {
+    return []
   }
-
-  const { data } = await query.limit(24)
-  return data ?? []
 }
 
 export default async function ListingsPage({

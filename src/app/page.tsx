@@ -1,8 +1,11 @@
 import Link from 'next/link'
 import { Search, MapPin, Shield, Star, ArrowRight } from 'lucide-react'
 import Navbar from '@/components/Navbar'
-import { createClient } from '@/lib/supabase'
+import { createServerReadClient } from '@/lib/supabase'
 import ListingCard from '@/components/ListingCard'
+
+// ดึงข้อมูลตอนเปิดเว็บจริง (ไม่ดึงตอน build) — กัน build พังถ้า Supabase ยังไม่พร้อม
+export const dynamic = 'force-dynamic'
 
 const PROVINCES = [
   'เชียงใหม่', 'กรุงเทพฯ', 'ภูเก็ต', 'กระบี่', 'เชียงราย',
@@ -11,14 +14,18 @@ const PROVINCES = [
 ]
 
 async function getFeaturedListings() {
-  const supabase = createClient()
-  const { data } = await supabase
-    .from('listings')
-    .select('*, categories(name, slug)')
-    .eq('is_active', true)
-    .order('rating_avg', { ascending: false })
-    .limit(6)
-  return data ?? []
+  try {
+    const supabase = createServerReadClient()
+    const { data } = await supabase
+      .from('listings')
+      .select('*, categories(name, slug)')
+      .eq('is_active', true)
+      .order('rating_avg', { ascending: false })
+      .limit(6)
+    return data ?? []
+  } catch {
+    return []
+  }
 }
 
 export default async function HomePage() {
