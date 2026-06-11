@@ -2,21 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 20 14.3% 4.1%;
-    --radius: 0.5rem;
-  }
+:root {
+  --radius: 0.5rem;
+}
 
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
-  }
+body {
+  font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+  background-color: #fff7ed;
+  color: #1f2937;
 }
 
 @layer utilities {
