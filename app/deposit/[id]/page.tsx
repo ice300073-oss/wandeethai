@@ -109,14 +109,14 @@ export default function DepositPage({ params }: { params: { id: string } }) {
 
       <div className="max-w-lg mx-auto px-6 py-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">มัดจำและประกัน</h2>
-        <p className="text-gray-400 mb-8">รายละเอียดการค้ำประกันการเช่า</p>
+        <p className="text-gray-400 mb-8">รายละเอียดการค้ำประกันการเข้าพัก</p>
 
         {/* รายละเอียดสินค้า */}
         <div className="bg-white rounded-xl border border-gray-100 p-5 mb-6">
           <h3 className="font-semibold text-gray-800 mb-3">{listing?.title}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">วันที่เช่า</span>
+              <span className="text-gray-500">วันที่เข้าพัก</span>
               <span className="text-gray-800">{booking.start_date}</span>
             </div>
             <div className="flex justify-between">
@@ -124,7 +124,7 @@ export default function DepositPage({ params }: { params: { id: string } }) {
               <span className="text-gray-800">{booking.end_date}</span>
             </div>
             <div className="flex justify-between border-t pt-2 mt-2">
-              <span className="font-semibold text-gray-800">ค่าเช่ารวม</span>
+              <span className="font-semibold text-gray-800">ค่าที่พักรวม</span>
               <span className="font-bold text-orange-500">฿{booking.total_price?.toLocaleString()}</span>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default function DepositPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* ปุ่มผู้เช่า */}
+        {/* ปุ่มผู้เข้าพัก */}
         {!isOwner && (
           <div className="space-y-3">
             {booking.deposit_status === 'pending' && (

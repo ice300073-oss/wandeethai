@@ -87,54 +87,27 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
   }
 
   const categoryLabel: Record<string, string> = {
-    house: '🏠 บ้าน / คอนโด / ห้อง',
-    villa: '🏖️ พูลวิลล่า / รีสอร์ท',
-    office: '🏢 ออฟฟิศ / พื้นที่ทำงาน',
-    car: '🚗 รถยนต์ / มอเตอร์ไซค์',
-    equipment: '🔧 อุปกรณ์ / เครื่องมือ',
-    fashion: '👗 เสื้อผ้า / แฟชั่น',
-  }
-
-  const rentalTypeLabel: Record<string, string> = {
-    daily: 'รายวัน / รายคืน',
-    monthly: 'รายเดือน',
-    yearly: 'รายปี',
+    homestay: '🏡 โฮมสเตย์',
+    villa: '🏖️ พูลวิลล่า',
+    hotel: '🏨 โรงแรม',
+    resort: '🌿 รีสอร์ท',
+    guesthouse: '🎒 เกสต์เฮาส์',
+    guide: '🗺️ ไกด์ท้องถิ่น',
   }
 
   const getPriceDisplay = () => {
     if (!listing) return null
-    if (listing.category === 'villa') {
-      return (
-        <div className="bg-orange-50 rounded-xl p-4 mb-4">
-          <p className="text-3xl font-bold text-orange-500">
-            ฿{listing.price_per_day?.toLocaleString()}
-            <span className="text-lg font-normal text-gray-400"> / คืน</span>
-          </p>
-          {listing.min_stay_days && (
-            <p className="text-sm text-gray-500 mt-1">พักขั้นต่ำ {listing.min_stay_days} คืน</p>
-          )}
-        </div>
-      )
-    }
-    if (listing.category === 'house' || listing.category === 'office') {
-      return (
-        <div className="bg-orange-50 rounded-xl p-4 mb-4">
-          <p className="text-3xl font-bold text-orange-500">
-            ฿{listing.price_per_month?.toLocaleString()}
-            <span className="text-lg font-normal text-gray-400"> / เดือน</span>
-          </p>
-          {listing.rental_type && (
-            <p className="text-sm text-gray-500 mt-1">สัญญา{rentalTypeLabel[listing.rental_type]}</p>
-          )}
-        </div>
-      )
-    }
+    const unit = listing.category === 'guide' ? ' / วัน' : ' / คืน'
+    const price = listing.price_per_day ?? listing.price_per_month
     return (
       <div className="bg-orange-50 rounded-xl p-4 mb-4">
         <p className="text-3xl font-bold text-orange-500">
-          ฿{listing.price_per_day?.toLocaleString()}
-          <span className="text-lg font-normal text-gray-400"> / วัน</span>
+          ฿{price?.toLocaleString()}
+          <span className="text-lg font-normal text-gray-400">{unit}</span>
         </p>
+        {listing.min_stay_days && (
+          <p className="text-sm text-gray-500 mt-1">พักขั้นต่ำ {listing.min_stay_days} คืน</p>
+        )}
       </div>
     )
   }
@@ -210,7 +183,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
 
             {getPriceDisplay()}
 
-            {listing.category === 'villa' && (listing.max_guests || listing.min_stay_days) && (
+            {listing.category !== 'guide' && (listing.max_guests || listing.min_stay_days) && (
               <div className="grid grid-cols-2 gap-3 mb-4">
                 {listing.max_guests && (
                   <div className="bg-gray-50 rounded-lg p-3 text-center">
@@ -238,7 +211,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
 
             <div className="mb-6">
               <span className={`inline-block px-3 py-1 rounded-full text-sm ${listing.is_available ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-400'}`}>
-                {listing.is_available ? '✓ ว่างให้เช่า' : '✗ ไม่ว่าง'}
+                {listing.is_available ? '✓ ว่างให้จอง' : '✗ ไม่ว่าง'}
               </span>
             </div>
 
@@ -252,7 +225,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
                     </a>
                     <a href={`/chat/${listing.id}`}
                       className="block w-full border border-gray-200 text-gray-600 py-3 rounded-xl hover:bg-gray-50 transition-all text-center">
-                      💬 ติดต่อผู้ให้เช่า
+                      💬 ติดต่อเจ้าของที่พัก
                     </a>
                   </>
                 ) : (
@@ -333,7 +306,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
         {/* รีวิว */}
         {reviews.length > 0 && (
           <div className="mt-12">
-            <h3 className="text-xl font-bold text-gray-800 mb-6">รีวิวจากผู้เช่า ({reviews.length})</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-6">รีวิวจากผู้เข้าพัก ({reviews.length})</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {reviews.map((review) => (
                 <div key={review.id} className="bg-white rounded-xl border border-gray-100 p-5">

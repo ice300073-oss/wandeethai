@@ -87,9 +87,9 @@ export default function Dashboard() {
   }
 
   const getPriceLabel = (listing: any) => {
-    if (listing.category === 'villa') return `฿${listing.price_per_day?.toLocaleString()}/คืน`
-    if (listing.category === 'house' || listing.category === 'office') return `฿${listing.price_per_month?.toLocaleString()}/เดือน`
-    return `฿${listing.price_per_day?.toLocaleString()}/วัน`
+    const price = listing.price_per_day ?? listing.price_per_month
+    const unit = listing.category === 'guide' ? '/วัน' : '/คืน'
+    return `฿${price?.toLocaleString()}${unit}`
   }
 
   const totalViews = Object.values(viewStats).reduce((a, b) => a + b, 0)
@@ -163,7 +163,7 @@ export default function Dashboard() {
             </div>
             <div className="bg-white rounded-xl p-5 border border-gray-100 text-center">
               <p className="text-3xl font-bold text-green-500">{listings.filter(l => l.is_available).length}</p>
-              <p className="text-sm text-gray-400 mt-1">เปิดให้เช่า</p>
+              <p className="text-sm text-gray-400 mt-1">เปิดให้จอง</p>
             </div>
             <div className="bg-white rounded-xl p-5 border border-gray-100 text-center">
               <p className="text-3xl font-bold text-gray-400">{listings.filter(l => !l.is_available).length}</p>
@@ -208,7 +208,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3 mb-1">
                       <h3 className="font-semibold text-gray-800">{listing.title}</h3>
                       <span className={`text-xs px-2 py-1 rounded-full ${listing.is_available ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                        {listing.is_available ? 'เปิดให้เช่า' : 'ปิดชั่วคราว'}
+                        {listing.is_available ? 'เปิดให้จอง' : 'ปิดชั่วคราว'}
                       </span>
                     </div>
                     <p className="text-sm text-gray-400">

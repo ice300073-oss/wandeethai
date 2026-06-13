@@ -95,7 +95,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           </div>
           <div>
             <h2 className="font-semibold text-gray-800">{listing.title}</h2>
-            <p className="text-xs text-gray-400">ติดต่อผู้ให้เช่า</p>
+            <p className="text-xs text-gray-400">ติดต่อเจ้าของที่พัก</p>
           </div>
         </div>
       </div>

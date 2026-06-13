@@ -172,7 +172,7 @@ export default function ProfilePage() {
           {[
             { key: 'info', label: 'ข้อมูลส่วนตัว' },
             { key: 'verify', label: 'ยืนยันตัวตน' },
-            { key: 'history', label: 'ประวัติการเช่า' },
+            { key: 'history', label: 'ประวัติการจอง' },
           ].map((tab) => (
             <button key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
@@ -266,8 +266,8 @@ export default function ProfilePage() {
             {bookings.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
                 <p className="text-4xl mb-3">📋</p>
-                <p className="text-gray-400">ยังไม่มีประวัติการเช่า</p>
-                <a href="/" className="mt-4 inline-block bg-orange-500 text-white px-6 py-2 rounded-lg text-sm">ค้นหาสินค้าเช่า</a>
+                <p className="text-gray-400">ยังไม่มีประวัติการจอง</p>
+                <a href="/" className="mt-4 inline-block bg-orange-500 text-white px-6 py-2 rounded-lg text-sm">ค้นหาที่พัก</a>
               </div>
             ) : (
               bookings.map((booking) => (

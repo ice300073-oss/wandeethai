@@ -248,7 +248,7 @@ export default function BookingPage({ params }: { params: { id: string } }) {
 
       <div className="max-w-2xl mx-auto px-6 py-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">จองสินค้า</h2>
-        <p className="text-gray-400 mb-6">เลือกวันที่ต้องการเช่าบนปฏิทิน</p>
+        <p className="text-gray-400 mb-6">เลือกวันที่ต้องการเข้าพักบนปฏิทิน</p>
 
         {/* Listing card */}
         <div className="bg-white rounded-xl border border-gray-100 p-5 mb-6 flex gap-4">

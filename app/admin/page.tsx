@@ -99,7 +99,7 @@ export default function AdminPage() {
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-5 text-center">
             <p className="text-3xl font-bold text-green-500">{listings.filter(l => l.is_available).length}</p>
-            <p className="text-sm text-gray-400 mt-1">เปิดให้เช่า</p>
+            <p className="text-sm text-gray-400 mt-1">เปิดให้จอง</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-5 text-center">
             <p className="text-3xl font-bold text-purple-500">{bookings.length}</p>
@@ -144,8 +144,8 @@ export default function AdminPage() {
             <div className="bg-white rounded-xl border border-gray-100 p-6">
               <h3 className="font-semibold text-gray-800 mb-4">หมวดหมู่ประกาศ</h3>
               <div className="space-y-3">
-                {['house', 'car', 'equipment', 'fashion'].map((cat) => {
-                  const labels: Record<string, string> = { house: '🏠 บ้าน/คอนโด', car: '🚗 รถยนต์', equipment: '🔧 อุปกรณ์', fashion: '👗 เสื้อผ้า' }
+                {['homestay', 'villa', 'hotel', 'resort', 'guesthouse', 'guide'].map((cat) => {
+                  const labels: Record<string, string> = { homestay: '🏡 โฮมสเตย์', villa: '🏖️ พูลวิลล่า', hotel: '🏨 โรงแรม', resort: '🌿 รีสอร์ท', guesthouse: '🎒 เกสต์เฮาส์', guide: '🗺️ ไกด์ท้องถิ่น' }
                   return (
                     <div key={cat} className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">{labels[cat]}</span>
@@ -170,7 +170,7 @@ export default function AdminPage() {
                       {listing.is_available ? 'เปิด' : 'ปิด'}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-400">{listing.category} • ฿{listing.price_per_day?.toLocaleString()}/วัน {listing.location && `• ${listing.location}`}</p>
+                  <p className="text-sm text-gray-400">{listing.category} • ฿{listing.price_per_day?.toLocaleString()}{listing.category === 'guide' ? '/วัน' : '/คืน'} {listing.location && `• ${listing.location}`}</p>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => toggleListing(listing.id, listing.is_available)}

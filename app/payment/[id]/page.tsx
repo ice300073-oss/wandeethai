@@ -110,7 +110,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
               <span className="text-gray-800">{listing?.title}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">วันที่เช่า</span>
+              <span className="text-gray-500">วันที่เข้าพัก</span>
               <span className="text-gray-800">{booking.start_date}</span>
             </div>
             <div className="flex justify-between">

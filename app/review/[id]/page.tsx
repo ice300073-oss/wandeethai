@@ -73,7 +73,7 @@ export default function ReviewPage({ params }: { params: { id: string } }) {
       </nav>
 
       <div className="max-w-lg mx-auto px-6 py-10">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">รีวิวการเช่า</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">รีวิวการเข้าพัก</h2>
         <p className="text-gray-400 mb-8">แชร์ประสบการณ์ให้คนอื่นได้รู้</p>
 
         {/* รายละเอียดสินค้า */}
@@ -108,7 +108,7 @@ export default function ReviewPage({ params }: { params: { id: string } }) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
-              placeholder="เล่าประสบการณ์การเช่า สภาพสินค้า การติดต่อกับผู้ให้เช่า..."
+              placeholder="เล่าประสบการณ์การเข้าพัก ความสะอาด การต้อนรับของเจ้าของที่พัก..."
               className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-orange-400 text-gray-800 bg-white resize-none"
             />
           </div>
