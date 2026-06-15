@@ -188,6 +188,14 @@ export default function Home() {
 
       {/* ===== HERO ===== */}
       <section className="relative bg-gradient-to-br from-orange-600 via-orange-500 to-amber-600 text-white overflow-hidden">
+        {/* รูปพื้นหลังท่องเที่ยว + overlay ส้มให้ตัวอักษรอ่านง่าย */}
+        <img
+          src="https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600&q=70"
+          alt=""
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-700/90 via-orange-600/80 to-amber-600/85"/>
         <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/2"/>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full translate-y-1/2 -translate-x-1/2"/>
         <div className="relative max-w-5xl mx-auto px-6 py-20 text-center">
@@ -278,10 +286,19 @@ export default function Home() {
             )}
           </div>
 
-          <div className="flex justify-center gap-8 mt-10 text-orange-200 text-sm">
-            <div className="flex items-center gap-2"><span>✅</span> ปลอดภัย มีระบบมัดจำ</div>
-            <div className="flex items-center gap-2"><span>⭐</span> รีวิวจากนักท่องเที่ยวจริง</div>
-            <div className="flex items-center gap-2"><span>💬</span> ติดต่อเจ้าของที่พักโดยตรง</div>
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mt-10 text-orange-100 text-sm">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              ปลอดภัย มีระบบมัดจำ
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+              รีวิวจากนักท่องเที่ยวจริง
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              ติดต่อเจ้าของที่พักโดยตรง
+            </div>
           </div>
         </div>
       </section>
