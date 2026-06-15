@@ -15,7 +15,8 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [qrCode, setQrCode] = useState<string>('')
 
-  const PROMPTPAY_NUMBER = '0991966336' // เปลี่ยนเป็นเบอร์จริงของคุณ
+  // เบอร์ PromptPay ที่เงินจะเข้า — ตั้งค่าผ่าน env หรือแก้ค่า default นี้ให้เป็นเบอร์/เลขประจำตัวผู้เสียภาษีของคุณ
+  const PROMPTPAY_NUMBER = process.env.NEXT_PUBLIC_PROMPTPAY_NUMBER || '0991966336'
 
   useEffect(() => {
     const fetchData = async () => {

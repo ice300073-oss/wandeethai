@@ -379,8 +379,8 @@ export default function Home() {
                     <img src={item.images[0]} alt={item.title}
                       className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300"/>
                   ) : (
-                    <div className="bg-gradient-to-br from-gray-100 to-gray-200 h-52 flex items-center justify-center text-gray-300 text-5xl">
-                      📷
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-100 h-52 flex items-center justify-center text-orange-300">
+                      <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
                     </div>
                   )}
                   <div className="absolute top-3 left-3">
@@ -388,10 +388,11 @@ export default function Home() {
                       {categoryLabel[item.category] || item.category}
                     </span>
                   </div>
-                  {item.category === 'villa' && item.max_guests && (
+                  {item.category !== 'guide' && item.max_guests && (
                     <div className="absolute top-3 right-3">
-                      <span className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full">
-                        👥 {item.max_guests} คน
+                      <span className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        {item.max_guests} คน
                       </span>
                     </div>
                   )}
@@ -400,7 +401,8 @@ export default function Home() {
                   <h4 className="font-semibold text-gray-900 text-base leading-snug line-clamp-1">{item.title}</h4>
                   {item.location && (
                     <p className="text-sm text-gray-400 mt-1.5 flex items-center gap-1">
-                      <span>📍</span> {item.location}
+                      <svg className="w-3.5 h-3.5 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      {item.location}
                     </p>
                   )}
                   <div className="flex items-center justify-between mt-3">
