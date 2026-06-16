@@ -23,6 +23,10 @@ create table if not exists profiles (
   full_name   text,
   avatar_url  text,
   phone       text,
+  line_id     text,
+  facebook    text,
+  bio         text,
+  is_verified boolean default false,          -- ยืนยันตัวตนแล้ว (แอดมินติ๊กให้)
   created_at  timestamptz default now()
 );
 

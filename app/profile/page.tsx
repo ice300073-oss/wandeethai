@@ -82,6 +82,17 @@ export default function ProfilePage() {
         address: form.address,
       }
     })
+    // บันทึกข้อมูลสาธารณะลงตาราง profiles ด้วย (สำหรับหน้าโปรไฟล์สาธารณะ /host/[id])
+    if (user?.id) {
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        full_name: form.full_name,
+        phone: form.phone,
+        line_id: form.line_id,
+        facebook: form.facebook,
+        avatar_url: user.user_metadata?.avatar_url || null,
+      })
+    }
     setMessage('✅ บันทึกข้อมูลสำเร็จ!')
     setLoading(false)
     setTimeout(() => setMessage(''), 3000)

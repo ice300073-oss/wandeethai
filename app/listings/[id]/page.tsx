@@ -236,6 +236,13 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
                 )}
               </div>
             )}
+
+            {listing.owner_id && (
+              <a href={`/host/${listing.owner_id}`}
+                className="block w-full mt-3 text-center text-sm text-orange-500 hover:underline">
+                ดูโปรไฟล์ & ที่พักทั้งหมดของเจ้าของรายนี้ →
+              </a>
+            )}
           </div>
         </div>
 
