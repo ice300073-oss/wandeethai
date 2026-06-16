@@ -15,6 +15,7 @@ export default function ProfilePage() {
     phone: '',
     line_id: '',
     facebook: '',
+    promptpay: '',
     id_card: '',
     address: '',
   })
@@ -44,6 +45,7 @@ export default function ProfilePage() {
           phone: user.user_metadata.phone || '',
           line_id: user.user_metadata.line_id || '',
           facebook: user.user_metadata.facebook || '',
+          promptpay: user.user_metadata.promptpay || '',
           id_card: user.user_metadata.id_card || '',
           address: user.user_metadata.address || '',
         })
@@ -79,10 +81,11 @@ export default function ProfilePage() {
         phone: form.phone,
         line_id: form.line_id,
         facebook: form.facebook,
+        promptpay: form.promptpay,
         address: form.address,
       }
     })
-    // บันทึกข้อมูลสาธารณะลงตาราง profiles ด้วย (สำหรับหน้าโปรไฟล์สาธารณะ /host/[id])
+    // บันทึกข้อมูลสาธารณะลงตาราง profiles ด้วย (สำหรับหน้าโปรไฟล์สาธารณะ /host/[id] + รับเงิน)
     if (user?.id) {
       await supabase.from('profiles').upsert({
         id: user.id,
@@ -90,6 +93,7 @@ export default function ProfilePage() {
         phone: form.phone,
         line_id: form.line_id,
         facebook: form.facebook,
+        promptpay: form.promptpay,
         avatar_url: user.user_metadata?.avatar_url || null,
       })
     }
@@ -210,6 +214,13 @@ export default function ProfilePage() {
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Facebook</label>
               <input name="facebook" value={form.facebook} onChange={handleChange} placeholder="facebook.com/username" className={inputClass}/>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                💰 PromptPay สำหรับรับเงิน <span className="text-gray-400 font-normal">(เบอร์มือถือ/เลขบัตร ปชช.)</span>
+              </label>
+              <input name="promptpay" value={form.promptpay} onChange={handleChange} placeholder="08XXXXXXXX" className={inputClass}/>
+              <p className="text-xs text-gray-400 mt-1">เมื่อมีคนจองที่พักของคุณ เงินจะเข้า PromptPay นี้โดยตรง</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">ที่อยู่</label>

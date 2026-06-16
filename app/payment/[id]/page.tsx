@@ -15,8 +15,9 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [qrCode, setQrCode] = useState<string>('')
 
-  // เบอร์ PromptPay ที่เงินจะเข้า — ตั้งค่าผ่าน env หรือแก้ค่า default นี้ให้เป็นเบอร์/เลขประจำตัวผู้เสียภาษีของคุณ
-  const PROMPTPAY_NUMBER = process.env.NEXT_PUBLIC_PROMPTPAY_NUMBER || '0991966336'
+  // เบอร์ PromptPay สำรอง (ถ้าเจ้าของยังไม่ได้ตั้ง) — เงินจะพยายามเข้าเจ้าของที่พักก่อนเสมอ
+  const FALLBACK_PROMPTPAY = process.env.NEXT_PUBLIC_PROMPTPAY_NUMBER || '0991966336'
+  const [payTo, setPayTo] = useState<string>(FALLBACK_PROMPTPAY)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,9 +30,19 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
         setBooking(bookingData)
         setListing(bookingData.listings)
 
+        // ดึง PromptPay ของเจ้าของที่พักรายนี้ (เงินเข้าเจ้าของตรงๆ)
+        let number = FALLBACK_PROMPTPAY
+        const ownerId = bookingData.listings?.owner_id
+        if (ownerId) {
+          const { data: owner } = await supabase
+            .from('profiles').select('promptpay').eq('id', ownerId).single()
+          if (owner?.promptpay) number = owner.promptpay
+        }
+        setPayTo(number)
+
         // สร้าง QR จริง
         const amount = bookingData.total_price
-        const payload = generatePayload(PROMPTPAY_NUMBER, { amount })
+        const payload = generatePayload(number, { amount })
         const qr = await QRCode.toDataURL(payload, {
           width: 200,
           margin: 2,
@@ -152,7 +163,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                       <p className="text-xs text-gray-400">กำลังสร้าง QR...</p>
                     </div>
                   )}
-                  <p className="font-bold text-gray-800 text-lg">{PROMPTPAY_NUMBER}</p>
+                  <p className="font-bold text-gray-800 text-lg">{payTo}</p>
                   <p className="text-orange-500 font-bold text-xl">฿{booking.total_price?.toLocaleString()}</p>
                 </div>
               </div>

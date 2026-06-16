@@ -36,7 +36,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [viewStats, setViewStats] = useState<Record<string, number>>({})
-  const [activeTab, setActiveTab] = useState<'listings' | 'analytics'>('listings')
+  const [bookings, setBookings] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<'listings' | 'bookings' | 'analytics'>('listings')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const { toast, showToast, hideToast } = useToast()
 
@@ -64,6 +65,15 @@ export default function Dashboard() {
             stats[listing.id] = count || 0
           }
           setViewStats(stats)
+
+          // ดึงการจองที่เข้ามาในที่พักของเรา
+          const listingIds = listingData.map((l: any) => l.id)
+          const { data: bookingData } = await supabase
+            .from('bookings')
+            .select('*, listings(title)')
+            .in('listing_id', listingIds)
+            .order('created_at', { ascending: false })
+          setBookings(bookingData || [])
         }
       }
       setLoading(false)
@@ -90,6 +100,23 @@ export default function Dashboard() {
     const price = listing.price_per_day ?? listing.price_per_month
     const unit = listing.category === 'guide' ? '/วัน' : '/คืน'
     return `฿${price?.toLocaleString()}${unit}`
+  }
+
+  const setBookingStatus = async (id: string, status: string) => {
+    showToast('กำลังอัปเดต...', 'loading')
+    await supabase.from('bookings').update({ status }).eq('id', id)
+    setBookings(bookings.map(b => b.id === id ? { ...b, status } : b))
+    showToast('อัปเดตการจองแล้ว', 'success')
+  }
+
+  const bookingStatusLabel: Record<string, string> = {
+    pending: 'รอชำระ', paid: 'จ่ายแล้ว', confirmed: 'ยืนยันแล้ว',
+    cancelled: 'ยกเลิก', completed: 'เสร็จสิ้น',
+  }
+  const bookingStatusColor: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-700', paid: 'bg-blue-100 text-blue-600',
+    confirmed: 'bg-green-100 text-green-600', cancelled: 'bg-red-100 text-red-400',
+    completed: 'bg-gray-100 text-gray-500',
   }
 
   const totalViews = Object.values(viewStats).reduce((a, b) => a + b, 0)
@@ -182,6 +209,10 @@ export default function Dashboard() {
             className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'listings' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-500'}`}>
             ประกาศของฉัน
           </button>
+          <button onClick={() => setActiveTab('bookings')}
+            className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'bookings' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-500'}`}>
+            การจอง {bookings.length > 0 && <span className="ml-1 text-xs bg-orange-500 text-white rounded-full px-1.5">{bookings.length}</span>}
+          </button>
           <button onClick={() => setActiveTab('analytics')}
             className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'analytics' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-500'}`}>
             📊 Analytics
@@ -218,6 +249,11 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="flex gap-2 ml-4">
+                    <a
+                      href={`/edit/${listing.id}`}
+                      className="text-xs px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      แก้ไข
+                    </a>
                     <button
                       onClick={() => toggleAvailable(listing.id, listing.is_available)}
                       className="text-xs px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
@@ -228,6 +264,55 @@ export default function Dashboard() {
                       className="text-xs px-3 py-2 border border-red-200 text-red-400 rounded-lg hover:bg-red-50">
                       ลบ
                     </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Tab: การจอง */}
+        {activeTab === 'bookings' && (
+          bookings.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-100 p-16 text-center">
+              <p className="text-5xl mb-4">📭</p>
+              <p className="text-gray-500">ยังไม่มีการจองเข้ามา</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {bookings.map((b) => (
+                <div key={b.id} className="bg-white rounded-xl border border-gray-100 p-5">
+                  <div className="flex justify-between items-start gap-3 mb-2">
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{b.listings?.title}</h3>
+                      <p className="text-sm text-gray-400 mt-0.5">
+                        🗓 {b.start_date} → {b.end_date}
+                      </p>
+                      <p className="text-orange-500 font-bold mt-1">฿{b.total_price?.toLocaleString()}</p>
+                    </div>
+                    <span className={`text-xs px-2.5 py-1 rounded-full shrink-0 ${bookingStatusColor[b.status] || 'bg-gray-100 text-gray-400'}`}>
+                      {bookingStatusLabel[b.status] || b.status}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {b.slip_url && (
+                      <a href={b.slip_url} target="_blank" rel="noopener noreferrer"
+                        className="text-xs px-3 py-2 bg-orange-50 text-orange-500 rounded-lg hover:bg-orange-100 border border-orange-200">
+                        🧾 ดูสลิป
+                      </a>
+                    )}
+                    {b.status !== 'confirmed' && (
+                      <button onClick={() => setBookingStatus(b.id, 'confirmed')}
+                        className="text-xs px-3 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200">
+                        ✓ ยืนยันการจอง
+                      </button>
+                    )}
+                    {b.status !== 'cancelled' && (
+                      <button onClick={() => setBookingStatus(b.id, 'cancelled')}
+                        className="text-xs px-3 py-2 bg-red-100 text-red-400 rounded-lg hover:bg-red-200">
+                        ปฏิเสธ
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
