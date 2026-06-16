@@ -120,7 +120,17 @@ export default function AdminPage() {
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-5 text-center">
             <p className="text-2xl font-bold text-amber-500">฿{totalRevenue.toLocaleString()}</p>
-            <p className="text-sm text-gray-400 mt-1">รายได้รวม</p>
+            <p className="text-sm text-gray-400 mt-1">ยอดจองผ่านเว็บ (GMV)</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-xl border border-gray-100 p-5 text-center">
+            <p className="text-3xl font-bold text-blue-500">{profiles.length}</p>
+            <p className="text-sm text-gray-400 mt-1">ผู้ใช้ทั้งหมด</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-100 p-5 text-center">
+            <p className="text-3xl font-bold text-green-600">{profiles.filter(p => p.is_verified).length}</p>
+            <p className="text-sm text-gray-400 mt-1">เจ้าของยืนยันแล้ว</p>
           </div>
         </div>
 
