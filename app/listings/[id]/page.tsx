@@ -14,6 +14,14 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
   const [newComment, setNewComment] = useState('')
   const [commentLoading, setCommentLoading] = useState(false)
   const [viewCount, setViewCount] = useState(0)
+  const [copied, setCopied] = useState(false)
+
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareLine = () => window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}`, '_blank')
+  const shareFb = () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank')
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {}
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -243,6 +251,27 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
                 ดูโปรไฟล์ & ที่พักทั้งหมดของเจ้าของรายนี้ →
               </a>
             )}
+
+            {/* แชร์ที่พักนี้ */}
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <p className="text-sm font-medium text-gray-600 mb-2">แชร์ที่พักนี้</p>
+              <div className="flex gap-2">
+                <button onClick={shareLine}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#06C755] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.69 2 10.25c0 4.09 3.58 7.51 8.42 8.16.33.07.78.22.89.5.1.26.07.66.03.92l-.14.86c-.04.26-.2 1.02.89.56 1.1-.46 5.9-3.48 8.05-5.96C21.5 13.6 22 12 22 10.25 22 5.69 17.52 2 12 2z"/></svg>
+                  LINE
+                </button>
+                <button onClick={shareFb}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#1877F2] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6 4.39 10.97 10.13 11.85v-8.38H7.08v-3.47h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.47h-2.8v8.38C19.61 23.04 24 18.07 24 12.07z"/></svg>
+                  Facebook
+                </button>
+                <button onClick={copyLink}
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">
+                  {copied ? '✓ คัดลอกแล้ว' : '🔗 คัดลอกลิงก์'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
