@@ -449,6 +449,26 @@ export default function Home() {
         )}
       </section>
 
+      {/* ===== ชวนเจ้าของลงประกาศ ===== */}
+      <section className="max-w-5xl mx-auto px-6 pb-16">
+        <div className="bg-gradient-to-r from-orange-500 to-amber-400 rounded-3xl px-8 py-12 text-center text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3"/>
+          <div className="relative">
+            <span className="inline-block bg-white/20 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm mb-4">
+              🎉 ลงฟรี ไม่เก็บค่าคอม 3 เดือนแรก
+            </span>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">มีที่พักหรืออยากเป็นไกด์?</h2>
+            <p className="text-orange-100 mb-6 max-w-lg mx-auto">
+              เปลี่ยนที่พักของคุณให้เป็นรายได้ เข้าถึงนักท่องเที่ยวคนเดี่ยวทั่วไทย
+            </p>
+            <a href="/become-host"
+              className="inline-block bg-white text-orange-600 font-semibold px-8 py-3 rounded-full hover:bg-orange-50 transition-colors shadow-lg">
+              ลงประกาศที่พักฟรี →
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ===== FOOTER ===== */}
       <footer className="bg-gray-900 text-gray-400 py-12 px-6">
         <div className="max-w-5xl mx-auto">
