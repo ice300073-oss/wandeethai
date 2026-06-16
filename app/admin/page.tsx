@@ -71,6 +71,18 @@ export default function AdminPage() {
     .filter(b => b.status === 'paid' || b.status === 'confirmed')
     .reduce((sum, b) => sum + (b.total_price || 0), 0)
 
+  // สถิติการเติบโต 30 วันล่าสุด
+  const since30 = Date.now() - 30 * 24 * 60 * 60 * 1000
+  const newUsers30 = profiles.filter(p => p.created_at && new Date(p.created_at).getTime() > since30).length
+  const newBookings30 = bookings.filter(b => b.created_at && new Date(b.created_at).getTime() > since30).length
+  const pendingVerify = profiles.filter(p => p.verify_status === 'pending' && !p.is_verified).length
+  // เรียงผู้ใช้: คิวรอตรวจขึ้นก่อน
+  const sortedProfiles = [...profiles].sort((a, b) => {
+    const ap = a.verify_status === 'pending' && !a.is_verified ? 0 : 1
+    const bp = b.verify_status === 'pending' && !b.is_verified ? 0 : 1
+    return ap - bp
+  })
+
   const statusColor: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-600',
     paid: 'bg-orange-100 text-orange-500',
@@ -131,6 +143,22 @@ export default function AdminPage() {
           <div className="bg-white rounded-xl border border-gray-100 p-5 text-center">
             <p className="text-3xl font-bold text-green-600">{profiles.filter(p => p.is_verified).length}</p>
             <p className="text-sm text-gray-400 mt-1">เจ้าของยืนยันแล้ว</p>
+          </div>
+        </div>
+
+        {/* การเติบโต 30 วันล่าสุด */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-orange-500 to-amber-400 text-white rounded-xl p-5">
+            <p className="text-2xl font-bold">+{newUsers30}</p>
+            <p className="text-sm text-orange-50 mt-1">ผู้ใช้ใหม่ (30 วัน)</p>
+          </div>
+          <div className="bg-gradient-to-br from-orange-500 to-amber-400 text-white rounded-xl p-5">
+            <p className="text-2xl font-bold">+{newBookings30}</p>
+            <p className="text-sm text-orange-50 mt-1">การจองใหม่ (30 วัน)</p>
+          </div>
+          <div className={`rounded-xl p-5 ${pendingVerify > 0 ? 'bg-blue-500 text-white' : 'bg-white border border-gray-100'}`}>
+            <p className={`text-2xl font-bold ${pendingVerify > 0 ? '' : 'text-gray-300'}`}>{pendingVerify}</p>
+            <p className={`text-sm mt-1 ${pendingVerify > 0 ? 'text-blue-50' : 'text-gray-400'}`}>🕘 รอตรวจยืนยันตัวตน</p>
           </div>
         </div>
 
@@ -253,14 +281,16 @@ export default function AdminPage() {
             {profiles.length === 0 && (
               <p className="text-center text-gray-400 py-10">ยังไม่มีผู้ใช้</p>
             )}
-            {profiles.map((p) => (
+            {sortedProfiles.map((p) => (
               <div key={p.id} className="bg-white rounded-xl border border-gray-100 p-5 flex justify-between items-center gap-3">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-gray-800 truncate">{p.full_name || '(ยังไม่ตั้งชื่อ)'}</h3>
-                    {p.is_verified && (
+                    {p.is_verified ? (
                       <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">✓ ยืนยันแล้ว</span>
-                    )}
+                    ) : p.verify_status === 'pending' ? (
+                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">🕘 รอตรวจ</span>
+                    ) : null}
                   </div>
                   <p className="text-xs text-gray-400 truncate">
                     {p.phone && `📞 ${p.phone} `}{p.line_id && `• LINE ${p.line_id}`}

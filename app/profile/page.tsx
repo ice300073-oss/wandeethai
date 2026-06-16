@@ -144,6 +144,9 @@ export default function ProfilePage() {
       }
     })
 
+    // บันทึกสถานะลง profiles ด้วย เพื่อให้แอดมินเห็นคิวรอตรวจ
+    await supabase.from('profiles').upsert({ id: userId, verify_status: 'pending' })
+
     setVerifyStatus('pending')
     setMessage('✅ ส่งข้อมูลยืนยันตัวตนเรียบร้อย! รอการตรวจสอบ 1-2 วันทำการ')
     setLoading(false)
