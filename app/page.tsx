@@ -55,6 +55,7 @@ export default function Home() {
   const [selectedPrice, setSelectedPrice] = useState(0)
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [showFilters, setShowFilters] = useState(false)
+  const [favIds, setFavIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,10 +72,31 @@ export default function Home() {
       const counts: Record<string, number> = {}
       all.forEach((l: any) => { counts[l.category] = (counts[l.category] || 0) + 1 })
       setCategoryCounts(counts)
+      // โหลดรายการโปรดของผู้ใช้
+      if (user) {
+        const { data: favs } = await supabase.from('favorites').select('listing_id').eq('user_id', user.id)
+        if (favs) setFavIds(new Set(favs.map((f: any) => f.listing_id)))
+      }
       setLoading(false)
     }
     fetchData()
   }, [])
+
+  const toggleFavorite = async (e: React.MouseEvent, listingId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user) { window.location.href = '/auth?next=/'; return }
+    const next = new Set(favIds)
+    if (next.has(listingId)) {
+      next.delete(listingId)
+      setFavIds(next)
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('listing_id', listingId)
+    } else {
+      next.add(listingId)
+      setFavIds(next)
+      await supabase.from('favorites').insert([{ user_id: user.id, listing_id: listingId }])
+    }
+  }
 
   useEffect(() => {
     let result = listings
@@ -388,8 +410,19 @@ export default function Home() {
                       {categoryLabel[item.category] || item.category}
                     </span>
                   </div>
+                  {/* ปุ่มหัวใจบันทึกที่ชอบ */}
+                  <button
+                    onClick={(e) => toggleFavorite(e, item.id)}
+                    aria-label="บันทึกที่ชอบ"
+                    className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center hover:scale-110 transition-transform">
+                    <svg className={`w-5 h-5 ${favIds.has(item.id) ? 'text-red-500' : 'text-gray-400'}`}
+                      viewBox="0 0 24 24" fill={favIds.has(item.id) ? 'currentColor' : 'none'}
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+                    </svg>
+                  </button>
                   {item.category !== 'guide' && item.max_guests && (
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute bottom-3 left-3">
                       <span className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                         <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         {item.max_guests} คน

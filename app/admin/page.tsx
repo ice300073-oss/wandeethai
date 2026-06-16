@@ -10,7 +10,8 @@ export default function AdminPage() {
   const [listings, setListings] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [bookings, setBookings] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings'>('overview')
+  const [profiles, setProfiles] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings' | 'hosts'>('overview')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -34,6 +35,12 @@ export default function AdminPage() {
         .order('created_at', { ascending: false })
       setBookings(bookingData || [])
 
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setProfiles(profileData || [])
+
       setLoading(false)
     }
     fetchData()
@@ -52,6 +59,12 @@ export default function AdminPage() {
   const updateBookingStatus = async (id: string, status: string) => {
     await supabase.from('bookings').update({ status }).eq('id', id)
     setBookings(bookings.map(b => b.id === id ? { ...b, status } : b))
+  }
+
+  const toggleVerified = async (id: string, current: boolean) => {
+    const { error } = await supabase.rpc('set_host_verified', { target_id: id, val: !current })
+    if (error) { alert('ไม่สำเร็จ: ' + error.message); return }
+    setProfiles(profiles.map(p => p.id === id ? { ...p, is_verified: !current } : p))
   }
 
   const totalRevenue = bookings
@@ -117,6 +130,7 @@ export default function AdminPage() {
             { key: 'overview', label: 'ภาพรวม' },
             { key: 'listings', label: 'ประกาศ' },
             { key: 'bookings', label: 'การจอง' },
+            { key: 'hosts', label: 'เจ้าของ' },
           ].map((tab) => (
             <button key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
@@ -218,6 +232,39 @@ export default function AdminPage() {
                     ยกเลิก
                   </button>
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tab: เจ้าของ (อนุมัติยืนยันตัวตน) */}
+        {activeTab === 'hosts' && (
+          <div className="space-y-3">
+            {profiles.length === 0 && (
+              <p className="text-center text-gray-400 py-10">ยังไม่มีผู้ใช้</p>
+            )}
+            {profiles.map((p) => (
+              <div key={p.id} className="bg-white rounded-xl border border-gray-100 p-5 flex justify-between items-center gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-800 truncate">{p.full_name || '(ยังไม่ตั้งชื่อ)'}</h3>
+                    {p.is_verified && (
+                      <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">✓ ยืนยันแล้ว</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 truncate">
+                    {p.phone && `📞 ${p.phone} `}{p.line_id && `• LINE ${p.line_id}`}
+                  </p>
+                  <a href={`/host/${p.id}`} className="text-xs text-orange-500 hover:underline">ดูโปรไฟล์ →</a>
+                </div>
+                <button onClick={() => toggleVerified(p.id, p.is_verified)}
+                  className={`text-xs px-4 py-2 rounded-lg font-medium shrink-0 ${
+                    p.is_verified
+                      ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}>
+                  {p.is_verified ? 'ยกเลิกยืนยัน' : '✓ อนุมัติยืนยันตัวตน'}
+                </button>
               </div>
             ))}
           </div>
