@@ -56,11 +56,13 @@ export default function Home() {
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [showFilters, setShowFilters] = useState(false)
   const [favIds, setFavIds] = useState<Set<string>>(new Set())
+  const [needRole, setNeedRole] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      if (user && !user.user_metadata?.role) setNeedRole(true)
       const { data } = await supabase
         .from('listings')
         .select('*')
@@ -81,6 +83,13 @@ export default function Home() {
     }
     fetchData()
   }, [])
+
+  const chooseRole = async (role: string) => {
+    setNeedRole(false)
+    if (!user) return
+    await supabase.auth.updateUser({ data: { role } })
+    await supabase.from('profiles').upsert({ id: user.id, role })
+  }
 
   const toggleFavorite = async (e: React.MouseEvent, listingId: string) => {
     e.preventDefault()
@@ -324,6 +333,30 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ===== แถบเลือกบทบาท (โผล่หลังสมัคร ถ้ายังไม่เลือก) ===== */}
+      {needRole && (
+        <section className="max-w-5xl mx-auto px-6 pt-8">
+          <div className="bg-white border border-orange-200 rounded-2xl p-6 shadow-sm">
+            <p className="font-semibold text-gray-800 mb-1">👋 ยินดีต้อนรับสู่ WanDeeThai!</p>
+            <p className="text-sm text-gray-500 mb-4">คุณอยากใช้งานในฐานะอะไร? (เปลี่ยนทีหลังได้ในโปรไฟล์)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { key: 'renter', icon: '🧳', label: 'นักท่องเที่ยว', desc: 'หาที่พัก / ไกด์' },
+                { key: 'owner', icon: '🏡', label: 'เจ้าของที่พัก', desc: 'ลงประกาศที่พัก' },
+                { key: 'both', icon: '✨', label: 'ทั้งสองอย่าง', desc: 'หาและลงประกาศ' },
+              ].map((r) => (
+                <button key={r.key} onClick={() => chooseRole(r.key)}
+                  className="p-4 rounded-xl border-2 border-gray-200 hover:border-orange-400 hover:bg-orange-50 text-center transition-all">
+                  <div className="text-2xl mb-1">{r.icon}</div>
+                  <div className="font-medium text-gray-800 text-sm">{r.label}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{r.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== CATEGORIES ===== */}
       <section className="max-w-5xl mx-auto px-6 py-12">

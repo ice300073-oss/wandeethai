@@ -16,6 +16,7 @@ export default function ProfilePage() {
     line_id: '',
     facebook: '',
     promptpay: '',
+    role: '',
     id_card: '',
     address: '',
   })
@@ -46,6 +47,7 @@ export default function ProfilePage() {
           line_id: user.user_metadata.line_id || '',
           facebook: user.user_metadata.facebook || '',
           promptpay: user.user_metadata.promptpay || '',
+          role: user.user_metadata.role || '',
           id_card: user.user_metadata.id_card || '',
           address: user.user_metadata.address || '',
         })
@@ -82,6 +84,7 @@ export default function ProfilePage() {
         line_id: form.line_id,
         facebook: form.facebook,
         promptpay: form.promptpay,
+        role: form.role,
         address: form.address,
       }
     })
@@ -94,6 +97,7 @@ export default function ProfilePage() {
         line_id: form.line_id,
         facebook: form.facebook,
         promptpay: form.promptpay,
+        role: form.role || 'renter',
         avatar_url: user.user_metadata?.avatar_url || null,
       })
     }
@@ -172,7 +176,14 @@ export default function ProfilePage() {
     <main className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
         <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
-        <a href="/dashboard" className="text-gray-600 hover:text-orange-500 text-sm">← Dashboard</a>
+        <div className="flex items-center gap-4">
+          <a href="/dashboard" className="text-gray-600 hover:text-orange-500 text-sm">Dashboard</a>
+          <button
+            onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')}
+            className="text-sm text-red-500 hover:text-red-600 font-medium">
+            ออกจากระบบ
+          </button>
+        </div>
       </nav>
 
       <div className="max-w-2xl mx-auto px-6 py-10">
@@ -202,6 +213,24 @@ export default function ProfilePage() {
 
         {activeTab === 'info' && (
           <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-5">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">ฉันใช้งานในฐานะ</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: 'renter', icon: '🧳', label: 'นักท่องเที่ยว' },
+                  { key: 'owner', icon: '🏡', label: 'เจ้าของที่พัก' },
+                  { key: 'both', icon: '✨', label: 'ทั้งสองอย่าง' },
+                ].map((r) => (
+                  <button key={r.key} type="button" onClick={() => setForm({ ...form, role: r.key })}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${
+                      form.role === r.key ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-200'
+                    }`}>
+                    <div className="text-xl mb-0.5">{r.icon}</div>
+                    <div className="text-xs font-medium text-gray-700">{r.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">ชื่อ-นามสกุล</label>
               <input name="full_name" value={form.full_name} onChange={handleChange} placeholder="กรอกชื่อ-นามสกุล" className={inputClass}/>
