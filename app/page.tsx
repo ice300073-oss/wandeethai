@@ -522,9 +522,9 @@ export default function Home() {
               <h4 className="text-white font-semibold mb-3">ลิงก์ด่วน</h4>
               <div className="space-y-2 text-sm">
                 <a href="/" className="block hover:text-white transition-colors">หน้าแรก</a>
-                <a href="/create" className="block hover:text-white transition-colors">ลงประกาศ</a>
+                <a href="/become-host" className="block hover:text-white transition-colors">ลงประกาศ</a>
+                <a href="/about" className="block hover:text-white transition-colors">เกี่ยวกับเรา / ช่วยเหลือ</a>
                 <a href="/auth" className="block hover:text-white transition-colors">สมัครสมาชิก</a>
-                <a href="/dashboard" className="block hover:text-white transition-colors">Dashboard</a>
               </div>
             </div>
             <div>
@@ -539,9 +539,9 @@ export default function Home() {
           <div className="border-t border-gray-800 pt-6 flex flex-wrap justify-between items-center gap-4 text-xs">
             <p>© 2025 WanDeeThai — แพลตฟอร์มท่องเที่ยวคนเดี่ยวของคนไทย</p>
             <div className="flex gap-4">
-              <a href="/terms" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
-              <a href="/privacy" className="hover:text-white transition-colors">เงื่อนไขการใช้งาน</a>
-              <a href="#" className="hover:text-white transition-colors">ช่วยเหลือ</a>
+              <a href="/terms" className="hover:text-white transition-colors">เงื่อนไขการใช้งาน</a>
+              <a href="/privacy" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
+              <a href="/about" className="hover:text-white transition-colors">ช่วยเหลือ</a>
             </div>
           </div>
         </div>
