@@ -190,6 +190,9 @@ export default function Home() {
                   <a href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                     👤 โปรไฟล์
                   </a>
+                  <a href="/favorites" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                    ❤️ รายการโปรด
+                  </a>
                   <a href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:hidden">
                     📋 Dashboard
                   </a>

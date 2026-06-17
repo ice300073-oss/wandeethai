@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-const ADMIN_EMAIL = 'ice300074@gmail.com'
+const ADMIN_EMAILS = ['ice300073@gmail.com', 'ice300074@gmail.com']
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
@@ -17,7 +17,7 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user || user.email !== ADMIN_EMAIL) {
+      if (!user || !ADMIN_EMAILS.includes(user.email)) {
         window.location.href = '/'
         return
       }
