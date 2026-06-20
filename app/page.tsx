@@ -44,6 +44,23 @@ function SkeletonCategory() {
   )
 }
 
+// ไอคอนหมวดหมู่ (เส้น) แทนอีโมจิ
+function CatIcon({ k }: { k: string }) {
+  const p = {
+    className: 'w-8 h-8 mx-auto text-orange-500', viewBox: '0 0 24 24', fill: 'none',
+    stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const,
+  }
+  switch (k) {
+    case 'homestay': return (<svg {...p}><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>)
+    case 'villa': return (<svg {...p}><path d="M4 21V9l8-5 8 5v12"/><path d="M3 14c1.6 0 1.6-1.2 3.2-1.2S7.8 14 9.4 14s1.6-1.2 3.2-1.2S14.2 14 15.8 14s1.6-1.2 3.2-1.2"/></svg>)
+    case 'hotel': return (<svg {...p}><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6"/></svg>)
+    case 'resort': return (<svg {...p}><path d="M12 22v-7"/><path d="M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/></svg>)
+    case 'guesthouse': return (<svg {...p}><path d="M2 17v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4"/><path d="M2 17h20v3"/><path d="M6 11V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/></svg>)
+    case 'guide': return (<svg {...p}><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg>)
+    default: return null
+  }
+}
+
 export default function Home() {
   const [listings, setListings] = useState<any[]>([])
   const [filtered, setFiltered] = useState<any[]>([])
@@ -398,7 +415,7 @@ export default function Home() {
                     ? 'border-orange-500 bg-orange-50 shadow-md'
                     : `${cat.color} hover:border-orange-300 hover:shadow-sm`
                 }`}>
-                <div className="text-3xl mb-2">{cat.icon}</div>
+                <div className="mb-2"><CatIcon k={cat.key} /></div>
                 <p className="font-semibold text-gray-800 text-xs leading-tight">{cat.label}</p>
                 <p className="text-xs text-gray-400 mt-1 font-medium">
                   {categoryCounts[cat.key] ?? 0} รายการ
