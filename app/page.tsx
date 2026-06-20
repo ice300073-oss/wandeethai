@@ -71,6 +71,7 @@ export default function Home() {
   const [selectedProvince, setSelectedProvince] = useState('')
   const [selectedPrice, setSelectedPrice] = useState(0)
   const [sortBy, setSortBy] = useState('newest')
+  const [menuOpen, setMenuOpen] = useState(false)
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [showFilters, setShowFilters] = useState(false)
   const [favIds, setFavIds] = useState<Set<string>>(new Set())
@@ -203,30 +204,37 @@ export default function Home() {
                 className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 text-sm font-medium transition-colors shadow-sm flex items-center gap-1">
                 <span>+</span> ลงประกาศ
               </a>
-              <div className="relative group">
-                <button className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-sm hover:bg-orange-200 transition-colors">
+              <div className="relative">
+                <button onClick={() => setMenuOpen(!menuOpen)}
+                  className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-sm hover:bg-orange-200 transition-colors">
                   {user.email?.[0]?.toUpperCase()}
                 </button>
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                  </div>
-                  <a href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    👤 โปรไฟล์
-                  </a>
-                  <a href="/favorites" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    ❤️ รายการโปรด
-                  </a>
-                  <a href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:hidden">
-                    📋 Dashboard
-                  </a>
-                  <hr className="my-1 border-gray-100"/>
-                  <button
-                    onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 text-left">
-                    🚪 ออกจากระบบ
-                  </button>
-                </div>
+                {menuOpen && (
+                  <>
+                    {/* backdrop ปิดเมนูเมื่อกดข้างนอก */}
+                    <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}/>
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                      </div>
+                      <a href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        👤 โปรไฟล์
+                      </a>
+                      <a href="/favorites" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        ❤️ รายการโปรด
+                      </a>
+                      <a href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        📋 Dashboard
+                      </a>
+                      <hr className="my-1 border-gray-100"/>
+                      <button
+                        onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 text-left">
+                        🚪 ออกจากระบบ
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </>
           ) : (
