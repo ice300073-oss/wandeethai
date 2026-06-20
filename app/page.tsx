@@ -53,6 +53,7 @@ export default function Home() {
   const [selectedCat, setSelectedCat] = useState('')
   const [selectedProvince, setSelectedProvince] = useState('')
   const [selectedPrice, setSelectedPrice] = useState(0)
+  const [sortBy, setSortBy] = useState('newest')
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [showFilters, setShowFilters] = useState(false)
   const [favIds, setFavIds] = useState<Set<string>>(new Set())
@@ -125,8 +126,14 @@ export default function Home() {
         return price >= priceRange.min && price <= priceRange.max
       })
     }
+    // เรียงผลลัพธ์
+    const getPrice = (l: any) => l.price_per_day ?? l.price_per_month ?? 0
+    result = [...result]
+    if (sortBy === 'price_asc') result.sort((a, b) => getPrice(a) - getPrice(b))
+    else if (sortBy === 'price_desc') result.sort((a, b) => getPrice(b) - getPrice(a))
+    else result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
     setFiltered(result)
-  }, [search, selectedCat, selectedProvince, selectedPrice, listings])
+  }, [search, selectedCat, selectedProvince, selectedPrice, sortBy, listings])
 
   const hasFilter = selectedCat || selectedProvince || selectedPrice > 0 || search
   const clearAll = () => { setSearch(''); setSelectedCat(''); setSelectedProvince(''); setSelectedPrice(0) }
@@ -288,6 +295,15 @@ export default function Home() {
                   <select value={selectedPrice} onChange={(e) => setSelectedPrice(Number(e.target.value))}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-400 bg-gray-50">
                     {PRICE_RANGES.map((p, i) => <option key={i} value={i}>{p.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block">↕️ เรียงตาม</label>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-400 bg-gray-50">
+                    <option value="newest">ใหม่ล่าสุด</option>
+                    <option value="price_asc">ราคา: ต่ำ → สูง</option>
+                    <option value="price_desc">ราคา: สูง → ต่ำ</option>
                   </select>
                 </div>
               </div>
