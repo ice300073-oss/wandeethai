@@ -82,6 +82,16 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
     return () => { supabase.removeChannel(channel) }
   }, [params.id])
 
+  const handleReport = async () => {
+    if (!user) { window.location.href = `/auth?next=/listings/${params.id}`; return }
+    const reason = window.prompt('แจ้งปัญหาประกาศนี้ (เช่น ข้อมูลเท็จ, รูปไม่ตรง, มิจฉาชีพ):')
+    if (!reason || !reason.trim()) return
+    const { error } = await supabase.from('reports').insert([{
+      listing_id: params.id, reporter_id: user.id, reason: reason.trim(),
+    }])
+    alert(error ? 'ส่งรายงานไม่สำเร็จ: ' + error.message : '✅ ขอบคุณครับ ทีมงานจะตรวจสอบให้')
+  }
+
   const handleAddComment = async () => {
     if (!newComment.trim() || !user) return
     setCommentLoading(true)
@@ -271,6 +281,10 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
                   {copied ? '✓ คัดลอกแล้ว' : '🔗 คัดลอกลิงก์'}
                 </button>
               </div>
+              <button onClick={handleReport}
+                className="mt-3 text-xs text-gray-400 hover:text-red-500 transition-colors">
+                🚩 รายงานประกาศนี้
+              </button>
             </div>
           </div>
         </div>
