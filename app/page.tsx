@@ -196,10 +196,6 @@ export default function Home() {
         <div className="flex gap-3 items-center">
           {user ? (
             <>
-              <a href="/dashboard"
-                className="text-gray-500 hover:text-orange-500 text-sm font-medium transition-colors hidden sm:block">
-                Dashboard
-              </a>
               <a href="/create"
                 className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 text-sm font-medium transition-colors shadow-sm flex items-center gap-1">
                 <span>+</span> ลงประกาศ
