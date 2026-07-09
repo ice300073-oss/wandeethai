@@ -11,7 +11,9 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([])
   const [bookings, setBookings] = useState<any[]>([])
   const [profiles, setProfiles] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings' | 'hosts'>('overview')
+  const [settings, setSettings] = useState<any>({})
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings' | 'hosts' | 'settings'>('overview')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -41,6 +43,10 @@ export default function AdminPage() {
         .order('created_at', { ascending: false })
       setProfiles(profileData || [])
 
+      const { data: settingsData } = await supabase
+        .from('site_settings').select('*').eq('id', 1).single()
+      setSettings(settingsData || {})
+
       setLoading(false)
     }
     fetchData()
@@ -60,6 +66,23 @@ export default function AdminPage() {
     await supabase.from('bookings').update({ status }).eq('id', id)
     setBookings(bookings.map(b => b.id === id ? { ...b, status } : b))
   }
+
+  const saveSettings = async () => {
+    setSavingSettings(true)
+    const { error } = await supabase.from('site_settings').update({
+      hero_title: settings.hero_title,
+      hero_subtitle: settings.hero_subtitle,
+      announcement: settings.announcement,
+      contact_line: settings.contact_line,
+      contact_email: settings.contact_email,
+      contact_phone: settings.contact_phone,
+      promptpay: settings.promptpay,
+      updated_at: new Date().toISOString(),
+    }).eq('id', 1)
+    setSavingSettings(false)
+    alert(error ? 'บันทึกไม่สำเร็จ: ' + error.message : '✅ บันทึกแล้ว! รีเฟรชหน้าแรกเพื่อดูผล')
+  }
+  const setS = (k: string, v: string) => setSettings((prev: any) => ({ ...prev, [k]: v }))
 
   const toggleVerified = async (id: string, current: boolean) => {
     const { error } = await supabase.rpc('set_host_verified', { target_id: id, val: !current })
@@ -169,6 +192,7 @@ export default function AdminPage() {
             { key: 'listings', label: 'ประกาศ' },
             { key: 'bookings', label: 'การจอง' },
             { key: 'hosts', label: 'เจ้าของ' },
+            { key: 'settings', label: '⚙️ ตั้งค่าเว็บ' },
           ].map((tab) => (
             <button key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
@@ -307,6 +331,35 @@ export default function AdminPage() {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Tab: ตั้งค่าเว็บ */}
+        {activeTab === 'settings' && (
+          <div className="bg-white rounded-xl border border-gray-100 p-6 max-w-2xl space-y-5">
+            <p className="text-sm text-gray-400">แก้ข้อความ/ข้อมูลเว็บได้เอง — กด "บันทึก" แล้วรีเฟรชหน้าแรก</p>
+            {[
+              { k: 'hero_title', label: 'สโลแกนหลัก (บรรทัดบน)', ph: 'เที่ยวคนเดียว' },
+              { k: 'hero_subtitle', label: 'สโลแกนรอง (บรรทัดล่าง)', ph: 'ก็เจ๋งได้' },
+              { k: 'announcement', label: '📢 แถบประกาศ (เว้นว่าง = ไม่โชว์)', ph: 'เช่น โปรเปิดตัว ลงประกาศฟรี!' },
+              { k: 'contact_line', label: 'LINE', ph: '@wandeethai' },
+              { k: 'contact_email', label: 'อีเมลติดต่อ', ph: 'you@email.com' },
+              { k: 'contact_phone', label: 'เบอร์โทร', ph: '08X-XXX-XXXX' },
+              { k: 'promptpay', label: '💰 PromptPay กลาง (สำรอง)', ph: '08XXXXXXXX' },
+            ].map((f) => (
+              <div key={f.k}>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">{f.label}</label>
+                <input
+                  value={settings[f.k] || ''}
+                  onChange={(e) => setS(f.k, e.target.value)}
+                  placeholder={f.ph}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
+              </div>
+            ))}
+            <button onClick={saveSettings} disabled={savingSettings}
+              className="bg-orange-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50">
+              {savingSettings ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
+            </button>
           </div>
         )}
       </div>

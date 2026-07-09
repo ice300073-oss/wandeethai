@@ -76,12 +76,15 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false)
   const [favIds, setFavIds] = useState<Set<string>>(new Set())
   const [needRole, setNeedRole] = useState(false)
+  const [settings, setSettings] = useState<any>({})
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
       if (user && !user.user_metadata?.role) setNeedRole(true)
+      supabase.from('site_settings').select('*').eq('id', 1).single()
+        .then(({ data }) => { if (data) setSettings(data) })
       const { data } = await supabase
         .from('listings')
         .select('*')
@@ -248,6 +251,13 @@ export default function Home() {
         </div>
       </nav>
 
+      {/* แถบประกาศ (ตั้งค่าได้จากแอดมิน) */}
+      {settings.announcement && (
+        <div className="bg-amber-400 text-amber-900 text-sm font-medium text-center py-2 px-4">
+          📢 {settings.announcement}
+        </div>
+      )}
+
       {/* ===== HERO ===== */}
       <section className="relative bg-gradient-to-br from-orange-600 via-orange-500 to-amber-600 text-white overflow-hidden">
         {/* รูปพื้นหลังท่องเที่ยว + overlay ส้มให้ตัวอักษรอ่านง่าย */}
@@ -266,8 +276,8 @@ export default function Home() {
             <span>มีประกาศใหม่วันนี้ {listings.length} รายการ</span>
           </div>
           <h2 className="text-5xl font-bold mb-4 leading-tight">
-            เที่ยวคนเดียว<br/>
-            <span className="text-orange-200">ก็เจ๋งได้</span>
+            {settings.hero_title || 'เที่ยวคนเดียว'}<br/>
+            <span className="text-orange-200">{settings.hero_subtitle || 'ก็เจ๋งได้'}</span>
           </h2>
           <p className="text-xl mb-10 text-orange-100 font-light">
             โฮมสเตย์ • พูลวิลล่า • โรงแรม • รีสอร์ท • เกสต์เฮาส์ • ไกด์ท้องถิ่น

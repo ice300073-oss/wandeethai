@@ -227,6 +227,26 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
               </p>
             </div>
 
+            {(listing.details?.bedrooms || listing.details?.bathrooms) && (
+              <div className="mb-4 flex gap-4 text-sm text-gray-600">
+                {listing.details.bedrooms && <span>🛏 {listing.details.bedrooms} ห้องนอน</span>}
+                {listing.details.bathrooms && <span>🚿 {listing.details.bathrooms} ห้องน้ำ</span>}
+              </div>
+            )}
+
+            {listing.details?.amenities?.length > 0 && (
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-800 mb-2">สิ่งอำนวยความสะดวก</h3>
+                <div className="flex flex-wrap gap-2">
+                  {listing.details.amenities.map((a: string) => (
+                    <span key={a} className="text-xs bg-orange-50 text-orange-600 px-3 py-1.5 rounded-full border border-orange-100">
+                      {a}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mb-6">
               <span className={`inline-block px-3 py-1 rounded-full text-sm ${listing.is_available ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-400'}`}>
                 {listing.is_available ? '✓ ว่างให้จอง' : '✗ ไม่ว่าง'}
