@@ -119,13 +119,10 @@ export default function BookingPage({ params }: { params: { id: string } }) {
       const { data } = await supabase.from('listings').select('*').eq('id', params.id).single()
       setListing(data)
 
-      const { data: bookings } = await supabase
-        .from('bookings')
-        .select('start_date, end_date')
-        .eq('listing_id', params.id)
-        .in('status', ['pending', 'confirmed'])
+      // ใช้ฟังก์ชัน get_blocked_dates เพื่อให้เห็นวันที่ทุกคนจองไว้ (กันจองชนกัน)
+      const { data: bookings } = await supabase.rpc('get_blocked_dates', { p_listing: params.id })
 
-      const ranges = (bookings || []).map(b => ({ start: b.start_date, end: b.end_date }))
+      const ranges = (bookings || []).map((b: any) => ({ start: b.start_date, end: b.end_date }))
       setBookedDates(ranges)
       setBlockedDates(getBlockedDates(ranges))
     }

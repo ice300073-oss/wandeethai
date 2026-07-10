@@ -38,6 +38,8 @@ export default function Dashboard() {
   const [viewStats, setViewStats] = useState<Record<string, number>>({})
   const [bookings, setBookings] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'listings' | 'bookings' | 'analytics'>('listings')
+  const [showWalkIn, setShowWalkIn] = useState(false)
+  const [walkIn, setWalkIn] = useState({ listing_id: '', guest_name: '', start_date: '', end_date: '' })
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const { toast, showToast, hideToast } = useToast()
 
@@ -107,6 +109,30 @@ export default function Dashboard() {
     await supabase.from('bookings').update({ status }).eq('id', id)
     setBookings(bookings.map(b => b.id === id ? { ...b, status } : b))
     showToast('อัปเดตการจองแล้ว', 'success')
+  }
+
+  const addWalkIn = async () => {
+    if (!walkIn.listing_id || !walkIn.start_date || !walkIn.end_date) {
+      showToast('กรุณาเลือกห้อง + วันเข้า/ออก', 'error'); return
+    }
+    if (walkIn.end_date <= walkIn.start_date) {
+      showToast('วันออกต้องหลังวันเข้า', 'error'); return
+    }
+    showToast('กำลังบันทึก...', 'loading')
+    const { error } = await supabase.from('bookings').insert([{
+      listing_id: walkIn.listing_id,
+      renter_id: null,
+      guest_name: walkIn.guest_name || 'จองหน้าร้าน',
+      start_date: walkIn.start_date,
+      end_date: walkIn.end_date,
+      total_price: 0,
+      status: 'confirmed',
+    }])
+    if (error) { showToast('ไม่สำเร็จ: ' + error.message, 'error'); return }
+    showToast('เพิ่มการจองแล้ว ✓ วันนั้นถูกบล็อกอัตโนมัติ', 'success')
+    setWalkIn({ listing_id: '', guest_name: '', start_date: '', end_date: '' })
+    setShowWalkIn(false)
+    setTimeout(() => window.location.reload(), 900)
   }
 
   const bookingStatusLabel: Record<string, string> = {
@@ -273,18 +299,52 @@ export default function Dashboard() {
 
         {/* Tab: การจอง */}
         {activeTab === 'bookings' && (
-          bookings.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 p-16 text-center">
-              <p className="text-5xl mb-4">📭</p>
-              <p className="text-gray-500">ยังไม่มีการจองเข้ามา</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {bookings.map((b) => (
+          <div className="space-y-3">
+            <button onClick={() => setShowWalkIn(!showWalkIn)}
+              className="text-sm bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
+              ➕ เพิ่มการจองเอง (walk-in / จองทางโทร)
+            </button>
+            {showWalkIn && (
+              <div className="bg-white rounded-xl border border-orange-200 p-5 space-y-3">
+                <p className="text-sm text-gray-500">บันทึกคนที่จองทางโทร/หน้าร้าน — วันนั้นจะถูกบล็อกกันจองชนกันอัตโนมัติ</p>
+                <select value={walkIn.listing_id} onChange={(e) => setWalkIn({ ...walkIn, listing_id: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-800">
+                  <option value="">เลือกห้อง / ที่พัก</option>
+                  {listings.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
+                </select>
+                <input value={walkIn.guest_name} onChange={(e) => setWalkIn({ ...walkIn, guest_name: e.target.value })}
+                  placeholder="ชื่อผู้เข้าพัก" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800"/>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">วันเข้าพัก</label>
+                    <input type="date" value={walkIn.start_date} onChange={(e) => setWalkIn({ ...walkIn, start_date: e.target.value })}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800"/>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">วันออก</label>
+                    <input type="date" value={walkIn.end_date} onChange={(e) => setWalkIn({ ...walkIn, end_date: e.target.value })}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800"/>
+                  </div>
+                </div>
+                <button onClick={addWalkIn}
+                  className="w-full bg-orange-500 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600">
+                  บันทึกการจอง
+                </button>
+              </div>
+            )}
+
+            {bookings.length === 0 ? (
+              <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+                <p className="text-4xl mb-3">📭</p>
+                <p className="text-gray-500">ยังไม่มีการจอง</p>
+              </div>
+            ) : (
+              bookings.map((b) => (
                 <div key={b.id} className="bg-white rounded-xl border border-gray-100 p-5">
                   <div className="flex justify-between items-start gap-3 mb-2">
                     <div>
                       <h3 className="font-semibold text-gray-800">{b.listings?.title}</h3>
+                      {b.guest_name && <p className="text-sm text-gray-600 mt-0.5">👤 {b.guest_name}</p>}
                       <p className="text-sm text-gray-400 mt-0.5">
                         🗓 {b.start_date} → {b.end_date}
                       </p>
@@ -315,9 +375,9 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )
+              ))
+            )}
+          </div>
         )}
 
         {/* Tab: Analytics */}
