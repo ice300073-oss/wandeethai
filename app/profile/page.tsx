@@ -27,6 +27,10 @@ export default function ProfilePage() {
   const [selfieFile, setSelfieFile] = useState<File | null>(null)
   const [verifyStatus, setVerifyStatus] = useState<string>('')
 
+  const [qrImage, setQrImage] = useState<string | null>(null)
+  const [qrFile, setQrFile] = useState<File | null>(null)
+  const [qrUploading, setQrUploading] = useState(false)
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -52,6 +56,7 @@ export default function ProfilePage() {
           address: user.user_metadata.address || '',
         })
         setVerifyStatus(user.user_metadata.verify_status || '')
+        if (user.user_metadata.qr_image_url) setQrImage(user.user_metadata.qr_image_url)
       }
     }
     fetchData()
@@ -73,6 +78,43 @@ export default function ProfilePage() {
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  const handleQrSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setQrFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setQrImage(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleQrUpload = async () => {
+    if (!qrFile || !user) return
+    setQrUploading(true)
+    const ext = qrFile.name.split('.').pop()
+    const fileName = `${user.id}_qr_${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('payment-qr').upload(fileName, qrFile, { upsert: true })
+    if (upErr) {
+      setMessage('❌ อัปโหลด QR ไม่สำเร็จ: ' + upErr.message)
+      setQrUploading(false)
+      return
+    }
+    const { data: urlData } = supabase.storage.from('payment-qr').getPublicUrl(fileName)
+    await supabase.auth.updateUser({ data: { qr_image_url: urlData.publicUrl } })
+    await supabase.from('profiles').upsert({ id: user.id, qr_image_url: urlData.publicUrl })
+    setQrImage(urlData.publicUrl)
+    setQrFile(null)
+    setMessage('✅ บันทึกรูป QR รับเงินแล้ว')
+    setQrUploading(false)
+  }
+
+  const handleQrRemove = async () => {
+    if (!user) return
+    await supabase.auth.updateUser({ data: { qr_image_url: null } })
+    await supabase.from('profiles').upsert({ id: user.id, qr_image_url: null })
+    setQrImage(null)
+    setQrFile(null)
   }
 
   const handleSaveInfo = async () => {
@@ -254,6 +296,28 @@ export default function ProfilePage() {
               <input name="promptpay" value={form.promptpay} onChange={handleChange} placeholder="08XXXXXXXX" className={inputClass}/>
               <p className="text-xs text-gray-400 mt-1">เมื่อมีคนจองที่พักของคุณ เงินจะเข้า PromptPay นี้โดยตรง</p>
             </div>
+
+            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                🧾 หรืออัปโหลดรูป QR รับเงินเอง <span className="text-gray-400 font-normal">(ถ้าเป็นบัญชีหน่วยงาน/ไม่มีเลขพร้อมเพย์)</span>
+              </label>
+              <p className="text-xs text-gray-400 mb-3">ถ้าอัปโหลดรูปนี้ไว้ หน้าชำระเงินจะแสดงรูปนี้แทน QR ที่สร้างจาก PromptPay</p>
+              {qrImage && (
+                <div className="mb-3 flex items-center gap-3">
+                  <img src={qrImage} alt="QR รับเงิน" className="w-28 h-28 object-contain rounded-lg border border-gray-200 bg-white"/>
+                  <button type="button" onClick={handleQrRemove} className="text-xs text-red-500 hover:underline">ลบรูปนี้</button>
+                </div>
+              )}
+              <input type="file" accept="image/*" onChange={handleQrSelect}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white"/>
+              {qrFile && (
+                <button type="button" onClick={handleQrUpload} disabled={qrUploading}
+                  className="mt-2 text-sm bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 disabled:opacity-50">
+                  {qrUploading ? 'กำลังอัปโหลด...' : 'บันทึกรูป QR นี้'}
+                </button>
+              )}
+            </div>
+
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">ที่อยู่</label>
               <input name="address" value={form.address} onChange={handleChange} placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด" className={inputClass}/>

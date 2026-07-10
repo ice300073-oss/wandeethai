@@ -18,6 +18,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
   // เบอร์ PromptPay สำรอง (ถ้าเจ้าของยังไม่ได้ตั้ง) — เงินจะพยายามเข้าเจ้าของที่พักก่อนเสมอ
   const FALLBACK_PROMPTPAY = process.env.NEXT_PUBLIC_PROMPTPAY_NUMBER || '0991966336'
   const [payTo, setPayTo] = useState<string>(FALLBACK_PROMPTPAY)
+  const [ownerQrImage, setOwnerQrImage] = useState<string>('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,25 +31,30 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
         setBooking(bookingData)
         setListing(bookingData.listings)
 
-        // ดึง PromptPay ของเจ้าของที่พักรายนี้ (เงินเข้าเจ้าของตรงๆ)
+        // ดึง PromptPay / รูป QR ของเจ้าของที่พักรายนี้ (เงินเข้าเจ้าของตรงๆ)
         let number = FALLBACK_PROMPTPAY
         const ownerId = bookingData.listings?.owner_id
+        let ownerQr = ''
         if (ownerId) {
           const { data: owner } = await supabase
-            .from('profiles').select('promptpay').eq('id', ownerId).single()
+            .from('profiles').select('promptpay, qr_image_url').eq('id', ownerId).single()
           if (owner?.promptpay) number = owner.promptpay
+          if (owner?.qr_image_url) ownerQr = owner.qr_image_url
         }
         setPayTo(number)
+        setOwnerQrImage(ownerQr)
 
-        // สร้าง QR จริง
-        const amount = bookingData.total_price
-        const payload = generatePayload(number, { amount })
-        const qr = await QRCode.toDataURL(payload, {
-          width: 200,
-          margin: 2,
-          color: { dark: '#000000', light: '#ffffff' }
-        })
-        setQrCode(qr)
+        // ถ้าเจ้าของอัปโหลดรูป QR เอง (เช่น บัญชีหน่วยงาน) ใช้รูปนั้นแทน — ไม่ต้องสร้าง QR จาก PromptPay
+        if (!ownerQr) {
+          const amount = bookingData.total_price
+          const payload = generatePayload(number, { amount })
+          const qr = await QRCode.toDataURL(payload, {
+            width: 200,
+            margin: 2,
+            color: { dark: '#000000', light: '#ffffff' }
+          })
+          setQrCode(qr)
+        }
       }
     }
     fetchData()
@@ -154,16 +160,18 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
           {method === 'promptpay' && (
             <div className="space-y-5">
               <div className="text-center">
-                <p className="text-sm text-gray-500 mb-3">สแกน QR หรือโอนไปที่</p>
+                <p className="text-sm text-gray-500 mb-3">สแกน QR เพื่อชำระเงิน</p>
                 <div className="bg-gray-50 rounded-xl p-6 inline-block mb-3">
-                  {qrCode ? (
+                  {ownerQrImage ? (
+                    <img src={ownerQrImage} alt="QR รับเงิน" className="w-48 h-48 object-contain mx-auto mb-3 bg-white rounded-lg"/>
+                  ) : qrCode ? (
                     <img src={qrCode} alt="PromptPay QR" className="w-48 h-48 mx-auto mb-3"/>
                   ) : (
                     <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center mx-auto mb-3">
                       <p className="text-xs text-gray-400">กำลังสร้าง QR...</p>
                     </div>
                   )}
-                  <p className="font-bold text-gray-800 text-lg">{payTo}</p>
+                  {!ownerQrImage && <p className="font-bold text-gray-800 text-lg">{payTo}</p>}
                   <p className="text-orange-500 font-bold text-xl">฿{booking.total_price?.toLocaleString()}</p>
                 </div>
               </div>
