@@ -75,7 +75,21 @@ export default function Dashboard() {
             .select('*, listings(title)')
             .in('listing_id', listingIds)
             .order('created_at', { ascending: false })
-          setBookings(bookingData || [])
+          const allBookings = bookingData || []
+
+          // ดึงข้อมูลติดต่อของลูกค้า (เบอร์/LINE) มาแนบกับแต่ละการจอง
+          const renterIds = Array.from(new Set(allBookings.map((b: any) => b.renter_id).filter(Boolean)))
+          let renterMap: Record<string, any> = {}
+          if (renterIds.length > 0) {
+            const { data: renterProfiles } = await supabase
+              .from('profiles').select('id, full_name, phone, line_id').in('id', renterIds)
+            renterMap = Object.fromEntries((renterProfiles || []).map((p: any) => [p.id, p]))
+          }
+          // เรียงให้รายการที่ลูกค้าชำระแล้วรอยืนยัน ขึ้นก่อน
+          const sorted = allBookings
+            .map((b: any) => ({ ...b, renterProfile: b.renter_id ? renterMap[b.renter_id] : null }))
+            .sort((a: any, b: any) => (a.status === 'paid' ? -1 : 0) - (b.status === 'paid' ? -1 : 0))
+          setBookings(sorted)
         }
       }
       setLoading(false)
@@ -96,6 +110,15 @@ export default function Dashboard() {
     await supabase.from('listings').delete().eq('id', id)
     setListings(listings.filter(l => l.id !== id))
     showToast('ลบประกาศแล้ว', 'success')
+  }
+
+  const formatThaiDate = (d: string) =>
+    d ? new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : ''
+
+  const nightsBetween = (start: string, end: string) => {
+    if (!start || !end) return 0
+    const ms = new Date(end).getTime() - new Date(start).getTime()
+    return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)))
   }
 
   const getPriceLabel = (listing: any) => {
@@ -136,16 +159,17 @@ export default function Dashboard() {
   }
 
   const bookingStatusLabel: Record<string, string> = {
-    pending: 'รอชำระ', paid: 'จ่ายแล้ว', confirmed: 'ยืนยันแล้ว',
+    pending: 'รอลูกค้าชำระเงิน', paid: '💳 ลูกค้าชำระแล้ว รอคุณยืนยัน', confirmed: '✓ ยืนยันแล้ว',
     cancelled: 'ยกเลิก', completed: 'เสร็จสิ้น',
   }
   const bookingStatusColor: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-700', paid: 'bg-blue-100 text-blue-600',
+    pending: 'bg-yellow-100 text-yellow-700', paid: 'bg-blue-100 text-blue-600 font-semibold',
     confirmed: 'bg-green-100 text-green-600', cancelled: 'bg-red-100 text-red-400',
     completed: 'bg-gray-100 text-gray-500',
   }
 
   const totalViews = Object.values(viewStats).reduce((a, b) => a + b, 0)
+  const needsConfirmCount = bookings.filter(b => b.status === 'paid').length
 
   if (!loading && !user) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -237,7 +261,12 @@ export default function Dashboard() {
           </button>
           <button onClick={() => setActiveTab('bookings')}
             className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'bookings' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-500'}`}>
-            การจอง {bookings.length > 0 && <span className="ml-1 text-xs bg-orange-500 text-white rounded-full px-1.5">{bookings.length}</span>}
+            การจอง
+            {needsConfirmCount > 0 ? (
+              <span className="ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 animate-pulse">{needsConfirmCount} รอยืนยัน</span>
+            ) : bookings.length > 0 ? (
+              <span className="ml-1 text-xs bg-orange-500 text-white rounded-full px-1.5">{bookings.length}</span>
+            ) : null}
           </button>
           <button onClick={() => setActiveTab('analytics')}
             className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'analytics' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-500'}`}>
@@ -340,20 +369,40 @@ export default function Dashboard() {
               </div>
             ) : (
               bookings.map((b) => (
-                <div key={b.id} className="bg-white rounded-xl border border-gray-100 p-5">
-                  <div className="flex justify-between items-start gap-3 mb-2">
+                <div key={b.id}
+                  className={`bg-white rounded-xl border p-5 ${b.status === 'paid' ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-100'}`}>
+                  <div className="flex justify-between items-start gap-3 mb-3">
                     <div>
                       <h3 className="font-semibold text-gray-800">{b.listings?.title}</h3>
-                      {b.guest_name && <p className="text-sm text-gray-600 mt-0.5">👤 {b.guest_name}</p>}
-                      <p className="text-sm text-gray-400 mt-0.5">
-                        🗓 {b.start_date} → {b.end_date}
+                      <p className="text-sm text-gray-700 mt-1">
+                        👤 {b.guest_name || b.renterProfile?.full_name || 'ลูกค้าผ่านเว็บ'}
                       </p>
-                      <p className="text-orange-500 font-bold mt-1">฿{b.total_price?.toLocaleString()}</p>
+                      {(b.renterProfile?.phone || b.renterProfile?.line_id) && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {b.renterProfile?.phone && `📞 ${b.renterProfile.phone}`}
+                          {b.renterProfile?.phone && b.renterProfile?.line_id && '  ·  '}
+                          {b.renterProfile?.line_id && `LINE: ${b.renterProfile.line_id}`}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-1.5">
+                        🗓 เข้าพัก <span className="text-gray-800 font-medium">{formatThaiDate(b.start_date)}</span>
+                        {' '}→ ออก <span className="text-gray-800 font-medium">{formatThaiDate(b.end_date)}</span>
+                        <span className="text-gray-400"> ({nightsBetween(b.start_date, b.end_date)} คืน)</span>
+                      </p>
+                      <p className="text-orange-500 font-bold mt-1.5">฿{b.total_price?.toLocaleString()}</p>
                     </div>
                     <span className={`text-xs px-2.5 py-1 rounded-full shrink-0 ${bookingStatusColor[b.status] || 'bg-gray-100 text-gray-400'}`}>
                       {bookingStatusLabel[b.status] || b.status}
                     </span>
                   </div>
+
+                  {b.special_request && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                      <p className="text-xs font-medium text-amber-700 mb-0.5">💬 คำขอพิเศษจากลูกค้า</p>
+                      <p className="text-sm text-amber-900">{b.special_request}</p>
+                    </div>
+                  )}
+
                   <div className="flex gap-2 flex-wrap">
                     {b.slip_url && (
                       <a href={b.slip_url} target="_blank" rel="noopener noreferrer"
@@ -363,7 +412,7 @@ export default function Dashboard() {
                     )}
                     {b.status !== 'confirmed' && (
                       <button onClick={() => setBookingStatus(b.id, 'confirmed')}
-                        className="text-xs px-3 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200">
+                        className="text-xs px-3 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 font-medium">
                         ✓ ยืนยันการจอง
                       </button>
                     )}

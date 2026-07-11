@@ -105,6 +105,7 @@ export default function BookingPage({ params }: { params: { id: string } }) {
   const [totalPrice, setTotalPrice] = useState(0)
   const [bookedDates, setBookedDates] = useState<{start: string, end: string}[]>([])
   const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set())
+  const [specialRequest, setSpecialRequest] = useState('')
 
   const today = formatDate(new Date())
   const [calYear, setCalYear] = useState(new Date().getFullYear())
@@ -219,6 +220,7 @@ export default function BookingPage({ params }: { params: { id: string } }) {
       end_date: endDate,
       total_price: totalPrice,
       status: 'pending',
+      special_request: specialRequest.trim() || null,
     }]).select()
 
     if (error) {
@@ -323,6 +325,20 @@ export default function BookingPage({ params }: { params: { id: string } }) {
           )}
           {startDate && !endDate && (
             <p className="text-sm text-center text-orange-500">👆 กดวันเช็คเอาท์บนปฏิทิน</p>
+          )}
+
+          {totalDays > 0 && (
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                คำขอพิเศษ <span className="text-gray-400 font-normal">(ถ้ามี — เช่น เตียงเสริม, เช็คอินเร็ว, จำนวนผู้เข้าพัก)</span>
+              </label>
+              <textarea
+                value={specialRequest}
+                onChange={(e) => setSpecialRequest(e.target.value)}
+                rows={2}
+                placeholder="แจ้งเจ้าของที่พักล่วงหน้า..."
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400 resize-none"/>
+            </div>
           )}
 
           {totalDays > 0 && (
