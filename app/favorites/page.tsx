@@ -15,7 +15,8 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) { window.location.href = '/auth?next=/favorites'; return }
       setUser(user)
       const { data } = await supabase

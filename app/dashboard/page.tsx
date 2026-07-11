@@ -45,7 +45,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       setUser(user)
 
       if (user) {
@@ -134,6 +135,19 @@ export default function Dashboard() {
     showToast('อัปเดตการจองแล้ว', 'success')
   }
 
+  const checkInBooking = async (id: string, code: string) => {
+    const input = window.prompt('พิมพ์รหัสจอง 8 หลักที่ลูกค้าแสดง เพื่อยืนยันเช็คอิน:')
+    if (!input) return
+    if (input.trim().toUpperCase() !== code) {
+      showToast('รหัสไม่ตรง กรุณาลองใหม่', 'error'); return
+    }
+    showToast('กำลังบันทึก...', 'loading')
+    const now = new Date().toISOString()
+    await supabase.from('bookings').update({ checked_in_at: now }).eq('id', id)
+    setBookings(bookings.map(b => b.id === id ? { ...b, checked_in_at: now } : b))
+    showToast('✓ เช็คอินลูกค้าแล้ว', 'success')
+  }
+
   const addWalkIn = async () => {
     if (!walkIn.listing_id || !walkIn.start_date || !walkIn.end_date) {
       showToast('กรุณาเลือกห้อง + วันเข้า/ออก', 'error'); return
@@ -151,7 +165,11 @@ export default function Dashboard() {
       total_price: 0,
       status: 'confirmed',
     }])
-    if (error) { showToast('ไม่สำเร็จ: ' + error.message, 'error'); return }
+    if (error) {
+      const isDoubleBooked = error.code === '23P01' || error.message?.toLowerCase().includes('exclu')
+      showToast(isDoubleBooked ? 'ช่วงวันที่นี้มีการจองอยู่แล้ว' : 'ไม่สำเร็จ: ' + error.message, 'error')
+      return
+    }
     showToast('เพิ่มการจองแล้ว ✓ วันนั้นถูกบล็อกอัตโนมัติ', 'success')
     setWalkIn({ listing_id: '', guest_name: '', start_date: '', end_date: '' })
     setShowWalkIn(false)
@@ -289,9 +307,9 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-4">
               {listings.map((listing) => (
-                <div key={listing.id} className="bg-white rounded-xl border border-gray-100 p-5 flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
+                <div key={listing.id} className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1 flex-wrap">
                       <h3 className="font-semibold text-gray-800">{listing.title}</h3>
                       <span className={`text-xs px-2 py-1 rounded-full ${listing.is_available ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                         {listing.is_available ? 'เปิดให้จอง' : 'ปิดชั่วคราว'}
@@ -303,11 +321,16 @@ export default function Dashboard() {
                       {viewStats[listing.id] !== undefined && ` • 👁 ${viewStats[listing.id]} ครั้ง`}
                     </p>
                   </div>
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-2 flex-wrap sm:ml-4">
                     <a
                       href={`/edit/${listing.id}`}
                       className="text-xs px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
                       แก้ไข
+                    </a>
+                    <a
+                      href={`/chat/${listing.id}`}
+                      className="text-xs px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      💬 ข้อความ
                     </a>
                     <button
                       onClick={() => toggleAvailable(listing.id, listing.is_available)}
@@ -391,9 +414,14 @@ export default function Dashboard() {
                       </p>
                       <p className="text-orange-500 font-bold mt-1.5">฿{b.total_price?.toLocaleString()}</p>
                     </div>
-                    <span className={`text-xs px-2.5 py-1 rounded-full shrink-0 ${bookingStatusColor[b.status] || 'bg-gray-100 text-gray-400'}`}>
-                      {bookingStatusLabel[b.status] || b.status}
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`text-xs px-2.5 py-1 rounded-full shrink-0 ${bookingStatusColor[b.status] || 'bg-gray-100 text-gray-400'}`}>
+                        {bookingStatusLabel[b.status] || b.status}
+                      </span>
+                      {b.checked_in_at && (
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-teal-100 text-teal-700">✓ เช็คอินแล้ว</span>
+                      )}
+                    </div>
                   </div>
 
                   {b.special_request && (
@@ -420,6 +448,12 @@ export default function Dashboard() {
                       <button onClick={() => setBookingStatus(b.id, 'cancelled')}
                         className="text-xs px-3 py-2 bg-red-100 text-red-400 rounded-lg hover:bg-red-200">
                         ปฏิเสธ
+                      </button>
+                    )}
+                    {b.status === 'confirmed' && !b.checked_in_at && (
+                      <button onClick={() => checkInBooking(b.id, b.id.slice(0, 8).toUpperCase())}
+                        className="text-xs px-3 py-2 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 font-medium">
+                        🎫 เช็คอินลูกค้า
                       </button>
                     )}
                   </div>

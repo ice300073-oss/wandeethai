@@ -25,7 +25,8 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       setUser(user)
 
       const { data } = await supabase
@@ -35,7 +36,10 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
         .single()
       setListing(data)
 
-      // นับ views
+      // บันทึกยอดเข้าชม (ไม่นับตอนเจ้าของเปิดดูประกาศตัวเอง) แล้วนับใหม่
+      if (data && data.owner_id !== user?.id) {
+        await supabase.from('listing_views').insert([{ listing_id: params.id, viewer_id: user?.id ?? null }])
+      }
       const { count } = await supabase
         .from('listing_views')
         .select('*', { count: 'exact', head: true })
@@ -54,32 +58,24 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
         setAvgRating(Math.round(avg * 10) / 10)
       }
 
-      // ดึง comments
+      // ดึง comments (ดึงชื่อผู้แสดงความเห็นแยก เพราะ comments ไม่มี FK ตรงไปตาราง profiles)
       const { data: commentData } = await supabase
         .from('comments')
-        .select('*, profiles(full_name)')
+        .select('*')
         .eq('listing_id', params.id)
         .order('created_at', { ascending: true })
-      setComments(commentData || [])
+      const commentUserIds = Array.from(new Set((commentData || []).map((c: any) => c.user_id).filter(Boolean)))
+      let commenterMap: Record<string, any> = {}
+      if (commentUserIds.length > 0) {
+        const { data: commenterProfiles } = await supabase
+          .from('profiles').select('id, full_name').in('id', commentUserIds)
+        commenterMap = Object.fromEntries((commenterProfiles || []).map((p: any) => [p.id, p]))
+      }
+      setComments((commentData || []).map((c: any) => ({ ...c, profiles: commenterMap[c.user_id] || null })))
 
       setLoading(false)
     }
     fetchData()
-
-    // Realtime comments
-    const channel = supabase
-      .channel('comments')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'comments',
-        filter: `listing_id=eq.${params.id}`,
-      }, (payload) => {
-        setComments((prev) => [...prev, payload.new])
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
   }, [params.id])
 
   const handleReport = async () => {
@@ -95,13 +91,23 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
   const handleAddComment = async () => {
     if (!newComment.trim() || !user) return
     setCommentLoading(true)
-    await supabase.from('comments').insert([{
+    const { data, error } = await supabase.from('comments').insert([{
       listing_id: params.id,
       user_id: user.id,
       content: newComment.trim(),
-    }])
-    setNewComment('')
+    }]).select().single()
+    if (!error && data) {
+      // เพิ่มลงหน้าจอทันที ไม่ต้องรอ realtime/รีเฟรช
+      setComments((prev) => [...prev, { ...data, profiles: { full_name: user.user_metadata?.full_name || 'คุณ' } }])
+      setNewComment('')
+    }
     setCommentLoading(false)
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!window.confirm('ลบความคิดเห็นนี้?')) return
+    const { error } = await supabase.from('comments').delete().eq('id', commentId)
+    if (!error) setComments((prev) => prev.filter((c: any) => c.id !== commentId))
   }
 
   const categoryLabel: Record<string, string> = {
@@ -356,9 +362,15 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
                   </div>
                   <div className="flex-1">
                     <div className="bg-white border border-gray-100 rounded-xl px-4 py-3">
-                      <p className="text-xs font-medium text-gray-700 mb-1">
-                        {comment.profiles?.full_name || 'ผู้ใช้งาน'}
-                      </p>
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="text-xs font-medium text-gray-700 mb-1">
+                          {comment.profiles?.full_name || 'ผู้ใช้งาน'}
+                        </p>
+                        {(user?.id === comment.user_id || user?.id === listing?.owner_id) && (
+                          <button onClick={() => handleDeleteComment(comment.id)}
+                            className="text-xs text-gray-300 hover:text-red-500 shrink-0">ลบ</button>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-700">{comment.content}</p>
                     </div>
                     <p className="text-xs text-gray-400 mt-1 ml-2">

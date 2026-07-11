@@ -34,7 +34,8 @@ export default function EditListing({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) { window.location.href = `/auth?next=/edit/${params.id}`; return }
       const { data: l } = await supabase.from('listings').select('*').eq('id', params.id).single()
       if (!l || l.owner_id !== user.id) {

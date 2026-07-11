@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { isProfileCompleteForHosting, missingProfileFields } from '@/lib/profile'
 
 const categories = [
   { value: 'homestay', label: '🏡 โฮมสเตย์' },
@@ -44,7 +45,8 @@ export default function CreateListing() {
   // ✅ เช็ค login ตั้งแต่โหลดหน้า
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) {
         window.location.href = '/auth?next=/create'
         return
@@ -60,6 +62,21 @@ export default function CreateListing() {
       <div className="text-center">
         <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"/>
         <p className="text-gray-400">กำลังตรวจสอบสิทธิ์...</p>
+      </div>
+    </div>
+  )
+
+  if (!isProfileCompleteForHosting(user)) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
+      <div className="text-center bg-white rounded-2xl border border-gray-100 p-8 max-w-sm">
+        <p className="text-4xl mb-3">📋</p>
+        <h2 className="font-semibold text-gray-800 mb-2">กรอกข้อมูลให้ครบก่อนลงประกาศ</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          ยังขาด: {missingProfileFields(user).join(', ')}
+        </p>
+        <a href="/profile" className="inline-block bg-orange-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600">
+          ไปกรอกข้อมูลโปรไฟล์
+        </a>
       </div>
     </div>
   )

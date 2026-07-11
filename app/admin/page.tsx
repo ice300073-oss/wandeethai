@@ -13,12 +13,14 @@ export default function AdminPage() {
   const [profiles, setProfiles] = useState<any[]>([])
   const [settings, setSettings] = useState<any>({})
   const [savingSettings, setSavingSettings] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings' | 'hosts' | 'settings'>('overview')
+  const [reports, setReports] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings' | 'hosts' | 'settings' | 'reports'>('overview')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user || !ADMIN_EMAILS.includes(user.email)) {
         window.location.href = '/'
         return
@@ -46,6 +48,12 @@ export default function AdminPage() {
       const { data: settingsData } = await supabase
         .from('site_settings').select('*').eq('id', 1).single()
       setSettings(settingsData || {})
+
+      const { data: reportData } = await supabase
+        .from('reports')
+        .select('*, listings(title)')
+        .order('created_at', { ascending: false })
+      setReports(reportData || [])
 
       setLoading(false)
     }
@@ -77,6 +85,7 @@ export default function AdminPage() {
       contact_email: settings.contact_email,
       contact_phone: settings.contact_phone,
       promptpay: settings.promptpay,
+      commission_percent: settings.commission_percent === '' ? null : Number(settings.commission_percent),
       updated_at: new Date().toISOString(),
     }).eq('id', 1)
     setSavingSettings(false)
@@ -90,9 +99,21 @@ export default function AdminPage() {
     setProfiles(profiles.map(p => p.id === id ? { ...p, is_verified: !current } : p))
   }
 
+  const setReportStatus = async (id: string, status: string) => {
+    await supabase.from('reports').update({ status }).eq('id', id)
+    setReports(reports.map(r => r.id === id ? { ...r, status } : r))
+  }
+
+  const openReportsCount = reports.filter(r => r.status === 'open' || !r.status).length
+
   const totalRevenue = bookings
     .filter(b => b.status === 'paid' || b.status === 'confirmed')
     .reduce((sum, b) => sum + (b.total_price || 0), 0)
+
+  // ค่าคอมมิชชั่นสะสม — เห็นเฉพาะแอดมิน ไม่แสดงที่หน้าลูกค้า/เจ้าของ
+  const totalCommission = bookings
+    .filter(b => b.status === 'paid' || b.status === 'confirmed')
+    .reduce((sum, b) => sum + (b.commission_amount || 0), 0)
 
   // สถิติการเติบโต 30 วันล่าสุด
   const since30 = Date.now() - 30 * 24 * 60 * 60 * 1000
@@ -128,20 +149,20 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
-          <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-medium">Admin</span>
+      <nav className="bg-white shadow-sm px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <a href="/" className="text-lg sm:text-2xl font-bold text-orange-500 shrink-0">WanDeeThai</a>
+          <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-medium shrink-0">Admin</span>
         </div>
-        <p className="text-gray-400 text-sm">{user?.email}</p>
+        <p className="text-gray-400 text-xs sm:text-sm truncate max-w-[40%]">{user?.email}</p>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <h2 className="text-2xl font-bold text-gray-800 mb-8">Admin Dashboard</h2>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 sm:mb-8">Admin Dashboard</h2>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl border border-gray-100 p-5 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5 text-center">
             <p className="text-3xl font-bold text-orange-500">{listings.length}</p>
             <p className="text-sm text-gray-400 mt-1">ประกาศทั้งหมด</p>
           </div>
@@ -167,6 +188,10 @@ export default function AdminPage() {
             <p className="text-3xl font-bold text-green-600">{profiles.filter(p => p.is_verified).length}</p>
             <p className="text-sm text-gray-400 mt-1">เจ้าของยืนยันแล้ว</p>
           </div>
+          <div className="bg-gray-900 rounded-xl p-5 text-center">
+            <p className="text-2xl font-bold text-emerald-400">฿{totalCommission.toLocaleString()}</p>
+            <p className="text-sm text-gray-400 mt-1">💵 ค่าคอมสะสม (แอดมินเท่านั้น)</p>
+          </div>
         </div>
 
         {/* การเติบโต 30 วันล่าสุด */}
@@ -185,18 +210,19 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex bg-gray-100 rounded-lg p-1 mb-6 w-fit">
+        {/* Tabs — เลื่อนซ้ายขวาได้บนมือถือ */}
+        <div className="flex bg-gray-100 rounded-lg p-1 mb-6 overflow-x-auto max-w-full">
           {[
             { key: 'overview', label: 'ภาพรวม' },
             { key: 'listings', label: 'ประกาศ' },
             { key: 'bookings', label: 'การจอง' },
             { key: 'hosts', label: 'เจ้าของ' },
+            { key: 'reports', label: `🚩 แจ้งปัญหา${openReportsCount > 0 ? ` (${openReportsCount})` : ''}` },
             { key: 'settings', label: '⚙️ ตั้งค่าเว็บ' },
           ].map((tab) => (
             <button key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
-              className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab.key ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-500'}`}>
+              className={`px-4 sm:px-5 py-2 rounded-md text-sm font-medium transition-all shrink-0 whitespace-nowrap ${activeTab === tab.key ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-500'}`}>
               {tab.label}
             </button>
           ))}
@@ -238,9 +264,9 @@ export default function AdminPage() {
         {activeTab === 'listings' && (
           <div className="space-y-3">
             {listings.map((listing) => (
-              <div key={listing.id} className="bg-white rounded-xl border border-gray-100 p-5 flex justify-between items-center">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
+              <div key={listing.id} className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 className="font-semibold text-gray-800">{listing.title}</h3>
                     <span className={`text-xs px-2 py-1 rounded-full ${listing.is_available ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                       {listing.is_available ? 'เปิด' : 'ปิด'}
@@ -356,10 +382,76 @@ export default function AdminPage() {
                   className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
               </div>
             ))}
+            <div className="border-t border-gray-100 pt-5">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                💵 ค่าคอมมิชชั่นต่อการจอง (%) <span className="text-gray-400 font-normal">— ไม่แสดงให้ลูกค้า/เจ้าของเห็น</span>
+              </label>
+              <input
+                type="number" step="0.1" min="0" max="100"
+                value={settings.commission_percent ?? ''}
+                onChange={(e) => setS('commission_percent', e.target.value)}
+                placeholder="10"
+                className="w-40 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
+              <p className="text-xs text-gray-400 mt-1">คำนวณอัตโนมัติทุกการจองใหม่ ดูสรุปได้ที่แท็บภาพรวม</p>
+            </div>
             <button onClick={saveSettings} disabled={savingSettings}
               className="bg-orange-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50">
               {savingSettings ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
             </button>
+          </div>
+        )}
+
+        {/* Tab: แจ้งปัญหา (รายงานประกาศ + แจ้งปัญหาทั่วไป) */}
+        {activeTab === 'reports' && (
+          <div className="space-y-3">
+            {reports.length === 0 ? (
+              <div className="bg-white rounded-xl border border-gray-100 p-12 text-center text-gray-400">
+                ยังไม่มีรายงาน/แจ้งปัญหาเข้ามา
+              </div>
+            ) : (
+              reports.map((r) => (
+                <div key={r.id} className="bg-white rounded-xl border border-gray-100 p-5">
+                  <div className="flex justify-between items-start gap-3 mb-2">
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-400">
+                        {r.listing_id ? `🚩 รายงานประกาศ: ${r.listings?.title || r.listing_id}` : '🛠️ แจ้งปัญหาทั่วไป'}
+                      </p>
+                      <p className="text-sm text-gray-800 mt-1 whitespace-pre-wrap">{r.reason}</p>
+                      {r.page_url && (
+                        <a href={r.page_url} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-orange-500 hover:underline mt-1 inline-block break-all">
+                          {r.page_url}
+                        </a>
+                      )}
+                      <p className="text-xs text-gray-300 mt-1">
+                        {new Date(r.created_at).toLocaleString('th-TH')}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2.5 py-1 rounded-full shrink-0 ${
+                      r.status === 'reviewed' ? 'bg-green-100 text-green-600'
+                      : r.status === 'dismissed' ? 'bg-gray-100 text-gray-400'
+                      : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {r.status === 'reviewed' ? 'ตรวจแล้ว' : r.status === 'dismissed' ? 'ยกเลิก' : 'รอตรวจ'}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {r.status !== 'reviewed' && (
+                      <button onClick={() => setReportStatus(r.id, 'reviewed')}
+                        className="text-xs px-3 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200">
+                        ✓ ตรวจแล้ว
+                      </button>
+                    )}
+                    {r.status !== 'dismissed' && (
+                      <button onClick={() => setReportStatus(r.id, 'dismissed')}
+                        className="text-xs px-3 py-2 border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50">
+                        ปิด (ไม่เกี่ยวข้อง)
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>

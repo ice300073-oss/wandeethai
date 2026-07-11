@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { isProfileCompleteForHosting } from '@/lib/profile'
 
 const PROVINCES = [
   'กรุงเทพมหานคร', 'เชียงใหม่', 'เชียงราย', 'ภูเก็ต', 'ชลบุรี',
@@ -80,7 +81,8 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       setUser(user)
       if (user && !user.user_metadata?.role) setNeedRole(true)
       supabase.from('site_settings').select('*').eq('id', 1).single()
@@ -199,10 +201,18 @@ export default function Home() {
         <div className="flex gap-3 items-center">
           {user ? (
             <>
-              <a href="/create"
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 text-sm font-medium transition-colors shadow-sm flex items-center gap-1">
-                <span>+</span> ลงประกาศ
-              </a>
+              {isProfileCompleteForHosting(user) ? (
+                <a href="/create"
+                  className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 text-sm font-medium transition-colors shadow-sm flex items-center gap-1">
+                  <span>+</span> ลงประกาศ
+                </a>
+              ) : (
+                <a href="/profile"
+                  title="กรอกข้อมูลโปรไฟล์ให้ครบก่อนลงประกาศได้"
+                  className="border border-orange-300 text-orange-500 px-4 py-2 rounded-lg hover:bg-orange-50 text-sm font-medium transition-colors hidden sm:flex items-center gap-1">
+                  กรอกข้อมูลให้ครบก่อนลงประกาศ →
+                </a>
+              )}
               <div className="relative">
                 <button onClick={() => setMenuOpen(!menuOpen)}
                   className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-sm hover:bg-orange-200 transition-colors">
@@ -532,65 +542,17 @@ export default function Home() {
         )}
       </section>
 
-      {/* ===== ชวนเจ้าของลงประกาศ ===== */}
-      <section className="max-w-5xl mx-auto px-6 pb-16">
-        <div className="bg-gradient-to-r from-orange-500 to-amber-400 rounded-3xl px-8 py-12 text-center text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3"/>
-          <div className="relative">
-            <span className="inline-block bg-white/20 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm mb-4">
-              🎉 ลงฟรี ไม่เก็บค่าคอม 3 เดือนแรก
-            </span>
-            <h2 className="text-2xl md:text-3xl font-bold mb-3">มีที่พักหรืออยากเป็นไกด์?</h2>
-            <p className="text-orange-100 mb-6 max-w-lg mx-auto">
-              เปลี่ยนที่พักของคุณให้เป็นรายได้ เข้าถึงนักท่องเที่ยวคนเดี่ยวทั่วไทย
-            </p>
-            <a href="/become-host"
-              className="inline-block bg-white text-orange-600 font-semibold px-8 py-3 rounded-full hover:bg-orange-50 transition-colors shadow-lg">
-              ลงประกาศที่พักฟรี →
-            </a>
-          </div>
-        </div>
-      </section>
-
       {/* ===== FOOTER ===== */}
-      <footer className="bg-gray-900 text-gray-400 py-12 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">W</span>
-                </div>
-                <span className="text-white font-bold text-lg">WanDee<span className="text-orange-400">Thai</span></span>
-              </div>
-              <p className="text-sm leading-relaxed">แพลตฟอร์มท่องเที่ยวคนเดี่ยวของคนไทย ที่พัก โฮมสเตย์ วิลล่า รีสอร์ท และไกด์ท้องถิ่นที่ปลอดภัย</p>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-3">ลิงก์ด่วน</h4>
-              <div className="space-y-2 text-sm">
-                <a href="/" className="block hover:text-white transition-colors">หน้าแรก</a>
-                <a href="/become-host" className="block hover:text-white transition-colors">ลงประกาศ</a>
-                <a href="/about" className="block hover:text-white transition-colors">เกี่ยวกับเรา / ช่วยเหลือ</a>
-                <a href="/auth" className="block hover:text-white transition-colors">สมัครสมาชิก</a>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-3">ติดต่อเรา</h4>
-              <div className="space-y-2 text-sm">
-                <p>📧 ice300074@gmail.com</p>
-                <p>🌐 wandeethai.vercel.app</p>
-                <p className="mt-4 text-xs">© 2025 WanDeeThai · สงวนลิขสิทธิ์</p>
-              </div>
-            </div>
+      <footer className="bg-gray-900 text-gray-500 py-6 px-6 text-xs">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            <span className="text-gray-300 font-medium">WanDeeThai</span>
+            <a href="/become-host" className="hover:text-gray-300 transition-colors">ลงประกาศ</a>
+            <a href="/about" className="hover:text-gray-300 transition-colors">เกี่ยวกับเรา/ช่วยเหลือ</a>
+            <a href="/terms" className="hover:text-gray-300 transition-colors">เงื่อนไขการใช้งาน</a>
+            <a href="/privacy" className="hover:text-gray-300 transition-colors">นโยบายความเป็นส่วนตัว</a>
           </div>
-          <div className="border-t border-gray-800 pt-6 flex flex-wrap justify-between items-center gap-4 text-xs">
-            <p>© 2025 WanDeeThai — แพลตฟอร์มท่องเที่ยวคนเดี่ยวของคนไทย</p>
-            <div className="flex gap-4">
-              <a href="/terms" className="hover:text-white transition-colors">เงื่อนไขการใช้งาน</a>
-              <a href="/privacy" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
-              <a href="/about" className="hover:text-white transition-colors">ช่วยเหลือ</a>
-            </div>
-          </div>
+          <p>© 2025 WanDeeThai</p>
         </div>
       </footer>
 

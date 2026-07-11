@@ -14,7 +14,8 @@ export default function ReviewPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) { window.location.href = '/auth'; return }
       setUser(user)
 

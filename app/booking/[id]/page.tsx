@@ -113,7 +113,8 @@ export default function BookingPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       setUser(user)
       if (!user) { window.location.href = `/auth?next=/booking/${params.id}`; return }
 
@@ -198,16 +199,12 @@ export default function BookingPage({ params }: { params: { id: string } }) {
     setLoading(true)
     setMessage('⏳ กำลังตรวจสอบและจอง...')
 
-    // Double-check
-    const { data: recheck } = await supabase
-      .from('bookings')
-      .select('id')
-      .eq('listing_id', params.id)
-      .in('status', ['pending', 'confirmed'])
-      .gte('end_date', startDate)
-      .lte('start_date', endDate)
+    // Double-check ผ่านฟังก์ชันที่มองเห็นการจองของทุกคน (การเช็คแบบเดิมโดน RLS บังตา
+    // ทำให้เห็นแต่ของตัวเอง เลยจองชนกันได้เงียบๆ)
+    const { data: allBlocked } = await supabase.rpc('get_blocked_dates', { p_listing: params.id })
+    const hasConflict = (allBlocked || []).some((r: any) => r.start_date <= endDate && r.end_date >= startDate)
 
-    if (recheck && recheck.length > 0) {
+    if (hasConflict) {
       setMessage('❌ ช่วงวันที่นี้เพิ่งถูกจองไป กรุณาเลือกวันอื่น')
       setLoading(false)
       return
@@ -224,7 +221,11 @@ export default function BookingPage({ params }: { params: { id: string } }) {
     }]).select()
 
     if (error) {
-      setMessage('❌ ' + error.message)
+      // ถ้าฐานข้อมูลกันชนกันไว้อีกชั้น (มีคนแซงจองในเสี้ยววินาทีเดียวกัน)
+      const isDoubleBooked = error.code === '23P01' || error.message?.toLowerCase().includes('exclu')
+      setMessage(isDoubleBooked
+        ? '❌ ขออภัย มีคนจองช่วงวันที่นี้ไปพอดี กรุณาเลือกวันอื่น'
+        : '❌ ' + error.message)
     } else {
       setMessage('✅ จองสำเร็จ! กำลังไปหน้าชำระเงิน...')
       setTimeout(() => window.location.href = `/payment/${bookingData[0].id}`, 1500)

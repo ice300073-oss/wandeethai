@@ -33,7 +33,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) { window.location.href = '/auth'; return }
       setUser(user)
 
@@ -396,7 +397,23 @@ export default function ProfilePage() {
                       {statusLabel[booking.status] || booking.status}
                     </span>
                   </div>
+                  {booking.listings?.location && (
+                    <p className="text-sm text-gray-500 flex items-center gap-1">
+                      📍 {booking.listings.location}
+                      <a
+                        href={`https://www.google.com/maps/search/${encodeURIComponent(booking.listings.title + ' ' + booking.listings.location)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="text-orange-500 hover:underline text-xs ml-1">
+                        ดูแผนที่
+                      </a>
+                    </p>
+                  )}
                   <p className="text-sm text-gray-400">{booking.start_date} → {booking.end_date}</p>
+                  {(booking.status === 'confirmed') && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      🎫 รหัสจอง (แสดงตอนเช็คอิน): <span className="font-mono font-semibold text-gray-700">{booking.id.slice(0, 8).toUpperCase()}</span>
+                    </p>
+                  )}
                   <p className="text-orange-500 font-bold mt-2">฿{booking.total_price?.toLocaleString()}</p>
                   <div className="flex gap-2 mt-3 flex-wrap">
                     {booking.status === 'pending' && (

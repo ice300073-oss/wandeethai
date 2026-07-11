@@ -3,6 +3,7 @@ import { Sarabun } from 'next/font/google'
 import './globals.css'
 import Script from 'next/script'
 import SwRegister from './sw-register'
+import IssueReportButton from '@/components/IssueReportButton'
 
 const sarabun = Sarabun({
   subsets: ['thai', 'latin'],
@@ -86,6 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
         {children}
+        <IssueReportButton />
         <SwRegister />
       </body>
     </html>
