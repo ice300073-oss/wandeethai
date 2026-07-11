@@ -387,63 +387,15 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'history' && (
-          <div className="space-y-4">
-            {bookings.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-                <p className="text-4xl mb-3">📋</p>
-                <p className="text-gray-400">ยังไม่มีประวัติการจอง</p>
-                <a href="/" className="mt-4 inline-block bg-orange-500 text-white px-6 py-2 rounded-lg text-sm">ค้นหาที่พัก</a>
-              </div>
-            ) : (
-              bookings.map((booking) => (
-                <div key={booking.id} className="bg-white rounded-xl border border-gray-100 p-5">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-gray-800">{booking.listings?.title}</h3>
-                    <span className={`text-xs px-2 py-1 rounded-full ${statusColor[booking.status] || 'bg-gray-100 text-gray-400'}`}>
-                      {statusLabel[booking.status] || booking.status}
-                    </span>
-                  </div>
-                  {booking.listings?.location && (
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
-                      📍 {booking.listings.location}
-                      <a
-                        href={`https://www.google.com/maps/search/${encodeURIComponent(booking.listings.title + ' ' + booking.listings.location)}`}
-                        target="_blank" rel="noopener noreferrer"
-                        className="text-orange-500 hover:underline text-xs ml-1">
-                        ดูแผนที่
-                      </a>
-                    </p>
-                  )}
-                  <p className="text-sm text-gray-400">{booking.start_date} → {booking.end_date}</p>
-                  {(booking.status === 'confirmed') && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      🎫 รหัสจอง (แสดงตอนเช็คอิน): <span className="font-mono font-semibold text-gray-700">{booking.id.slice(0, 8).toUpperCase()}</span>
-                    </p>
-                  )}
-                  <p className="text-orange-500 font-bold mt-2">฿{booking.total_price?.toLocaleString()}</p>
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {booking.status === 'pending' && (
-                      <a href={`/payment/${booking.id}`}
-                        className="inline-block bg-orange-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-600">
-                        ชำระเงิน
-                      </a>
-                    )}
-                    {(booking.status === 'paid' || booking.status === 'confirmed') && (
-                      <>
-                        <a href={`/deposit/${booking.id}`}
-                          className="inline-block bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600">
-                          🔒 มัดจำ/ประกัน
-                        </a>
-                        <a href={`/review/${booking.id}`}
-                          className="inline-block bg-yellow-400 text-white px-4 py-2 rounded-lg text-sm hover:bg-yellow-500">
-                          ⭐ เขียนรีวิว
-                        </a>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
+          <div className="bg-white rounded-xl border border-gray-100 p-10 text-center">
+            <p className="text-4xl mb-3">🎫</p>
+            <p className="text-gray-700 font-medium mb-1">การจองทั้งหมดย้ายไปหน้า "ตั๋วของฉัน" แล้ว</p>
+            <p className="text-gray-400 text-sm mb-5">
+              {bookings.length > 0 ? `คุณมี ${bookings.length} รายการ` : 'ดูตั๋ว รหัสเช็คอิน และสถานะการจองได้ที่นั่น'}
+            </p>
+            <a href="/tickets" className="inline-block bg-orange-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600">
+              🎫 ไปหน้าตั๋วของฉัน
+            </a>
           </div>
         )}
       </div>

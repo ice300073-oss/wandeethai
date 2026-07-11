@@ -230,6 +230,9 @@ export default function Home() {
                       <div className="px-4 py-2 border-b border-gray-100">
                         <p className="text-xs text-gray-400 truncate">{user.email}</p>
                       </div>
+                      <a href="/tickets" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        🎫 ตั๋วของฉัน
+                      </a>
                       <a href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         👤 โปรไฟล์
                       </a>
