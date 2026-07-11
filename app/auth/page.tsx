@@ -1,7 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+
+// ข้อความ error จาก LINE login (query ?error=)
+const LINE_ERROR_LABELS: Record<string, string> = {
+  line_not_configured: 'ระบบ LINE ยังไม่ถูกตั้งค่า (ผู้ดูแลต้องใส่ค่า channel)',
+  line_state_mismatch: 'เซสชันหมดอายุ กรุณาลองใหม่',
+  line_token_failed: 'เชื่อมต่อ LINE ไม่สำเร็จ กรุณาลองใหม่',
+  line_verify_failed: 'ยืนยันข้อมูล LINE ไม่สำเร็จ',
+  line_link_failed: 'สร้างเซสชันไม่สำเร็จ กรุณาลองใหม่',
+  line_exception: 'เกิดข้อผิดพลาดระหว่างเข้าสู่ระบบด้วย LINE',
+}
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -62,12 +72,24 @@ export default function AuthPage() {
     setForgotLoading(false)
   }
 
+  // แสดง error ที่ส่งกลับมาจาก LINE callback (?error=)
+  useEffect(() => {
+    const err = new URLSearchParams(window.location.search).get('error')
+    if (err) setMessage('❌ ' + (LINE_ERROR_LABELS[err] || 'เข้าสู่ระบบไม่สำเร็จ'))
+  }, [])
+
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({ provider: 'google' })
   }
 
   const handleFacebookLogin = async () => {
     await supabase.auth.signInWithOAuth({ provider: 'facebook' })
+  }
+
+  // LINE ไม่ใช่ provider ในตัวของ Supabase → ส่งไปที่ API route ที่เราเขียนเอง
+  const handleLineLogin = () => {
+    const next = new URLSearchParams(window.location.search).get('next') || '/'
+    window.location.href = `/api/auth/line?next=${encodeURIComponent(next)}`
   }
 
   const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-orange-400 text-gray-800 bg-white"
@@ -208,6 +230,16 @@ export default function AuthPage() {
               <span className="bg-white px-2">หรือเข้าสู่ระบบด้วย</span>
             </div>
           </div>
+
+          <button
+            onClick={handleLineLogin}
+            className="w-full text-white py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+            style={{ backgroundColor: '#06C755' }}>
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738C5.383.566 0 4.935 0 10.304c0 4.813 4.269 8.844 10.036 9.608.391.084.923.258 1.058.592.121.303.079.778.039 1.083l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967C23.176 14.398 24 12.459 24 10.304zM7.729 13.09H5.343a.63.63 0 01-.63-.63V7.687a.63.63 0 111.26 0v4.143h1.756a.63.63 0 010 1.26zm2.467-.63a.63.63 0 01-1.26 0V7.687a.63.63 0 011.26 0v4.773zm5.752 0a.63.63 0 01-.63.63.626.626 0 01-.504-.252l-2.446-3.328v2.95a.63.63 0 01-1.26 0V7.687a.628.628 0 01.63-.63.625.625 0 01.503.252l2.447 3.328V7.687a.63.63 0 011.26 0v4.773zm3.849-2.917a.63.63 0 010 1.26h-1.756v1.027h1.756a.63.63 0 010 1.26h-2.386a.63.63 0 01-.63-.63V7.687a.63.63 0 01.63-.63h2.386a.63.63 0 010 1.26h-1.756v1.026h1.756z"/>
+            </svg>
+            เข้าสู่ระบบด้วย LINE
+          </button>
 
           <button
             onClick={handleGoogleLogin}
