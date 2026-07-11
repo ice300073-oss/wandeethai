@@ -3,6 +3,27 @@
 -- ก็อปทั้งหมดนี้ → Supabase > SQL Editor > New query > วาง → Run
 -- ============================================================
 
+-- ---------- 0) ตาราง site_settings (พลาดตกหล่น ไม่เคยถูกสร้าง — ต้องมีก่อนขั้น 6,7) ----------
+create table if not exists site_settings (
+  id            int primary key default 1,
+  hero_title    text,
+  hero_subtitle text,
+  announcement  text,
+  contact_line  text,
+  contact_email text,
+  contact_phone text,
+  promptpay     text,
+  updated_at    timestamptz default now(),
+  constraint single_row check (id = 1)
+);
+insert into site_settings (id) values (1) on conflict (id) do nothing;
+alter table site_settings enable row level security;
+drop policy if exists settings_read  on site_settings;
+create policy settings_read  on site_settings for select using (true);
+drop policy if exists settings_write on site_settings;
+create policy settings_write on site_settings for update
+  using ((auth.jwt() ->> 'email') in ('ice300073@gmail.com', 'ice300074@gmail.com'));
+
 -- ---------- 1) กันจองชนกันจริงจัง (DB-level) ----------
 create extension if not exists btree_gist;
 
