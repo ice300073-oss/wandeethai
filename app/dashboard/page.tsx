@@ -149,6 +149,15 @@ export default function Dashboard() {
     showToast('✓ เช็คอินลูกค้าแล้ว', 'success')
   }
 
+  // เจ้าของกดยืนยันว่ารับเงินส่วนที่เหลือ (เงินสด/โอนหน้างาน) จากลูกค้าที่จ่ายมัดจำมาแล้ว
+  const markBalancePaid = async (id: string, total: number) => {
+    if (!window.confirm('ยืนยันว่าได้รับเงินส่วนที่เหลือจากลูกค้าครบแล้ว?')) return
+    showToast('กำลังบันทึก...', 'loading')
+    await supabase.from('bookings').update({ amount_paid: total }).eq('id', id)
+    setBookings(bookings.map(b => b.id === id ? { ...b, amount_paid: total } : b))
+    showToast('✓ บันทึกรับเงินครบแล้ว', 'success')
+  }
+
   const addWalkIn = async () => {
     if (!walkIn.listing_id || !walkIn.start_date || !walkIn.end_date) {
       showToast('กรุณาเลือกห้อง + วันเข้า/ออก', 'error'); return
@@ -414,6 +423,11 @@ export default function Dashboard() {
                         <span className="text-gray-400"> ({nightsBetween(b.start_date, b.end_date)} คืน)</span>
                       </p>
                       <p className="text-orange-500 font-bold mt-1.5">฿{b.total_price?.toLocaleString()}</p>
+                      {b.payment_type === 'deposit' && (b.amount_paid || 0) < b.total_price && (
+                        <p className="text-xs text-amber-700 mt-0.5">
+                          💰 จ่ายมัดจำแล้ว ฿{(b.amount_paid || 0).toLocaleString()} · เหลือเก็บ <span className="font-semibold">฿{(b.total_price - (b.amount_paid || 0)).toLocaleString()}</span>
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`text-xs px-2.5 py-1 rounded-full shrink-0 ${bookingStatusColor[b.status] || 'bg-gray-100 text-gray-400'}`}>
@@ -455,6 +469,12 @@ export default function Dashboard() {
                       <button onClick={() => checkInBooking(b.id, b.id.slice(0, 8).toUpperCase())}
                         className="text-xs px-3 py-2 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 font-medium">
                         🎫 เช็คอินลูกค้า
+                      </button>
+                    )}
+                    {b.payment_type === 'deposit' && (b.amount_paid || 0) < b.total_price && b.status !== 'cancelled' && (
+                      <button onClick={() => markBalancePaid(b.id, b.total_price)}
+                        className="text-xs px-3 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 font-medium">
+                        💵 รับเงินที่เหลือแล้ว
                       </button>
                     )}
                   </div>

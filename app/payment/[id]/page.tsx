@@ -14,11 +14,21 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
   const [slip, setSlip] = useState<string | null>(null)
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [qrCode, setQrCode] = useState<string>('')
+  const [payChoice, setPayChoice] = useState<'deposit' | 'full'>('full')
 
   // เบอร์ PromptPay สำรอง (ถ้าเจ้าของยังไม่ได้ตั้ง) — เงินจะพยายามเข้าเจ้าของที่พักก่อนเสมอ
   const FALLBACK_PROMPTPAY = process.env.NEXT_PUBLIC_PROMPTPAY_NUMBER || '0991966336'
   const [payTo, setPayTo] = useState<string>(FALLBACK_PROMPTPAY)
   const [ownerQrImage, setOwnerQrImage] = useState<string>('')
+
+  const total = booking?.total_price || 0
+  const alreadyPaid = booking?.amount_paid || 0
+  const deposit = Math.round(total * 0.5)
+  // ถ้าจ่ายมัดจำมาแล้ว (จ่ายบางส่วน) → เข้าโหมด "จ่ายส่วนที่เหลือ"
+  const isBalanceMode = alreadyPaid > 0 && alreadyPaid < total
+  const payNow = isBalanceMode
+    ? total - alreadyPaid
+    : (payChoice === 'deposit' ? deposit : total)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,31 +44,31 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
         // ดึง PromptPay / รูป QR ของเจ้าของที่พักรายนี้ (เงินเข้าเจ้าของตรงๆ)
         let number = FALLBACK_PROMPTPAY
         const ownerId = bookingData.listings?.owner_id
-        let ownerQr = ''
         if (ownerId) {
           const { data: owner } = await supabase
             .from('profiles').select('promptpay, qr_image_url').eq('id', ownerId).single()
           if (owner?.promptpay) number = owner.promptpay
-          if (owner?.qr_image_url) ownerQr = owner.qr_image_url
+          if (owner?.qr_image_url) setOwnerQrImage(owner.qr_image_url)
         }
         setPayTo(number)
-        setOwnerQrImage(ownerQr)
-
-        // ถ้าเจ้าของอัปโหลดรูป QR เอง (เช่น บัญชีหน่วยงาน) ใช้รูปนั้นแทน — ไม่ต้องสร้าง QR จาก PromptPay
-        if (!ownerQr) {
-          const amount = bookingData.total_price
-          const payload = generatePayload(number, { amount })
-          const qr = await QRCode.toDataURL(payload, {
-            width: 200,
-            margin: 2,
-            color: { dark: '#000000', light: '#ffffff' }
-          })
-          setQrCode(qr)
-        }
       }
     }
     fetchData()
   }, [params.id])
+
+  // สร้าง QR PromptPay ใหม่ทุกครั้งที่ยอด (มัดจำ/เต็ม/ส่วนที่เหลือ) เปลี่ยน — ยกเว้นเจ้าของอัปโหลดรูป QR เอง
+  useEffect(() => {
+    if (ownerQrImage || !payNow || !payTo) return
+    let cancelled = false
+    ;(async () => {
+      const payload = generatePayload(payTo, { amount: payNow })
+      const qr = await QRCode.toDataURL(payload, {
+        width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' },
+      })
+      if (!cancelled) setQrCode(qr)
+    })()
+    return () => { cancelled = true }
+  }, [payNow, payTo, ownerQrImage])
 
   const handleSlipUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -87,10 +97,13 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
       slipUrl = data.publicUrl
     }
 
-    const { error } = await supabase
-      .from('bookings')
-      .update({ status: 'paid', ...(slipUrl && { slip_url: slipUrl }) })
-      .eq('id', params.id)
+    // จ่ายครั้งแรก → บันทึกประเภท + ยอด + เปลี่ยนสถานะเป็น paid
+    // จ่ายส่วนที่เหลือ → อัปยอดเป็นเต็มจำนวน (ไม่แตะสถานะเดิม)
+    const update: any = isBalanceMode
+      ? { amount_paid: total, ...(slipUrl && { slip_url: slipUrl }) }
+      : { amount_paid: payNow, payment_type: payChoice, status: 'paid', ...(slipUrl && { slip_url: slipUrl }) }
+
+    const { error } = await supabase.from('bookings').update(update).eq('id', params.id)
 
     if (error) {
       setMessage('❌ เกิดข้อผิดพลาด: ' + error.message)
@@ -98,7 +111,11 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
       return
     }
 
-    setMessage('✅ ชำระเงินสำเร็จ! รอการยืนยันจากเจ้าของ')
+    setMessage(isBalanceMode
+      ? '✅ จ่ายส่วนที่เหลือสำเร็จ!'
+      : payChoice === 'deposit'
+        ? '✅ จ่ายมัดจำสำเร็จ! รอการยืนยันจากเจ้าของ'
+        : '✅ ชำระเงินสำเร็จ! รอการยืนยันจากเจ้าของ')
     setTimeout(() => window.location.href = '/tickets', 2000)
     setLoading(false)
   }
@@ -113,34 +130,70 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
     <main className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
         <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
-        <a href="/profile" className="text-gray-600 hover:text-orange-500 text-sm">← กลับ</a>
+        <a href="/tickets" className="text-gray-600 hover:text-orange-500 text-sm">← กลับ</a>
       </nav>
 
       <div className="max-w-lg mx-auto px-6 py-10">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">ชำระเงิน</h2>
-        <p className="text-gray-400 mb-8">เลือกวิธีชำระเงิน</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          {isBalanceMode ? 'จ่ายส่วนที่เหลือ' : 'ชำระเงิน'}
+        </h2>
+        <p className="text-gray-400 mb-6">
+          {isBalanceMode ? 'ชำระยอดคงเหลือของการจอง' : 'เลือกยอดและวิธีชำระเงิน'}
+        </p>
 
         <div className="bg-white rounded-xl border border-gray-100 p-5 mb-6">
           <h3 className="font-semibold text-gray-800 mb-3">สรุปการจอง</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">สินค้า</span>
+              <span className="text-gray-500">ที่พัก</span>
               <span className="text-gray-800">{listing?.title}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">วันที่เข้าพัก</span>
-              <span className="text-gray-800">{booking.start_date}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">วันที่คืน</span>
-              <span className="text-gray-800">{booking.end_date}</span>
+              <span className="text-gray-500">เข้าพัก</span>
+              <span className="text-gray-800">{booking.start_date} → {booking.end_date}</span>
             </div>
             <div className="flex justify-between border-t pt-2 mt-2">
-              <span className="font-semibold text-gray-800">ยอดชำระ</span>
-              <span className="font-bold text-orange-500 text-lg">฿{booking.total_price?.toLocaleString()}</span>
+              <span className="text-gray-500">ราคารวมทั้งหมด</span>
+              <span className="text-gray-800">฿{total.toLocaleString()}</span>
+            </div>
+            {isBalanceMode && (
+              <div className="flex justify-between text-green-600">
+                <span>จ่ายมัดจำแล้ว</span>
+                <span>− ฿{alreadyPaid.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between border-t pt-2 mt-2">
+              <span className="font-semibold text-gray-800">ยอดที่ต้องจ่ายตอนนี้</span>
+              <span className="font-bold text-orange-500 text-lg">฿{payNow.toLocaleString()}</span>
             </div>
           </div>
         </div>
+
+        {/* เลือกจ่ายมัดจำ / เต็มจำนวน (เฉพาะการจ่ายครั้งแรก) */}
+        {!isBalanceMode && (
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button
+              onClick={() => setPayChoice('deposit')}
+              className={`rounded-xl border-2 p-4 text-left transition-all ${payChoice === 'deposit' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}>
+              <p className={`font-semibold text-sm ${payChoice === 'deposit' ? 'text-orange-600' : 'text-gray-700'}`}>จ่ายมัดจำ 50%</p>
+              <p className="text-lg font-bold text-gray-800 mt-1">฿{deposit.toLocaleString()}</p>
+              <p className="text-xs text-gray-400 mt-0.5">เหลือ ฿{(total - deposit).toLocaleString()} จ่ายทีหลัง</p>
+            </button>
+            <button
+              onClick={() => setPayChoice('full')}
+              className={`rounded-xl border-2 p-4 text-left transition-all ${payChoice === 'full' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}>
+              <p className={`font-semibold text-sm ${payChoice === 'full' ? 'text-orange-600' : 'text-gray-700'}`}>จ่ายเต็มจำนวน</p>
+              <p className="text-lg font-bold text-gray-800 mt-1">฿{total.toLocaleString()}</p>
+              <p className="text-xs text-gray-400 mt-0.5">จ่ายครบจบในครั้งเดียว</p>
+            </button>
+          </div>
+        )}
+
+        {payChoice === 'deposit' && !isBalanceMode && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-6">
+            💡 ส่วนที่เหลือ ฿{(total - deposit).toLocaleString()} จ่ายเพิ่มออนไลน์ทีหลัง หรือจ่ายกับเจ้าของตอนเช็คอินก็ได้
+          </p>
+        )}
 
         <div className="flex gap-3 mb-6">
           <button
@@ -172,7 +225,8 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                     </div>
                   )}
                   {!ownerQrImage && <p className="font-bold text-gray-800 text-lg">{payTo}</p>}
-                  <p className="text-orange-500 font-bold text-xl">฿{booking.total_price?.toLocaleString()}</p>
+                  {ownerQrImage && <p className="text-xs text-gray-400">โอนตามยอดด้านล่าง</p>}
+                  <p className="text-orange-500 font-bold text-xl">฿{payNow.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -194,9 +248,9 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
 
               <button
                 onClick={handlePayment}
-                disabled={loading || !slip}
+                disabled={loading || !slipFile}
                 className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50">
-                {loading ? 'กำลังดำเนินการ...' : 'ยืนยันการชำระเงิน'}
+                {loading ? 'กำลังดำเนินการ...' : `ยืนยันการชำระเงิน ฿${payNow.toLocaleString()}`}
               </button>
             </div>
           )}
@@ -220,7 +274,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                   </div>
                   <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
                     <span className="text-gray-500 font-medium">ยอดที่ต้องโอน</span>
-                    <span className="font-bold text-orange-500 text-lg">฿{booking.total_price?.toLocaleString()}</span>
+                    <span className="font-bold text-orange-500 text-lg">฿{payNow.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -245,7 +299,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                 onClick={handlePayment}
                 disabled={loading || !slipFile}
                 className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50">
-                {loading ? 'กำลังดำเนินการ...' : 'ยืนยันการชำระเงิน'}
+                {loading ? 'กำลังดำเนินการ...' : `ยืนยันการชำระเงิน ฿${payNow.toLocaleString()}`}
               </button>
             </div>
           )}

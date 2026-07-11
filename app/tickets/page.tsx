@@ -116,6 +116,21 @@ export default function TicketsPage() {
                       </div>
                     </div>
 
+                    {/* ยอดคงเหลือ (กรณีจ่ายมัดจำ) */}
+                    {b.payment_type === 'deposit' && (b.amount_paid || 0) < b.total_price && b.status !== 'cancelled' && (
+                      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-amber-700">จ่ายมัดจำแล้ว</span>
+                          <span className="text-green-600 font-medium">฿{(b.amount_paid || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between mt-0.5">
+                          <span className="text-amber-700">ยอดคงเหลือ</span>
+                          <span className="text-amber-900 font-bold">฿{(b.total_price - (b.amount_paid || 0)).toLocaleString()}</span>
+                        </div>
+                        <p className="text-xs text-amber-600 mt-1">จ่ายเพิ่มออนไลน์ หรือจ่ายกับเจ้าของตอนเช็คอินก็ได้</p>
+                      </div>
+                    )}
+
                     {/* รหัสจอง — โชว์เมื่อยืนยันแล้ว ใช้ตอนเช็คอิน */}
                     {b.status === 'confirmed' && (
                       <div className={`mt-4 rounded-xl px-4 py-3 text-center ${b.checked_in_at ? 'bg-teal-50 border border-teal-200' : 'bg-gray-900'}`}>
@@ -140,13 +155,15 @@ export default function TicketsPage() {
                       )}
                       {(b.status === 'paid' || b.status === 'confirmed') && (
                         <>
+                          {b.payment_type === 'deposit' && (b.amount_paid || 0) < b.total_price && (
+                            <a href={`/payment/${b.id}`}
+                              className="text-center bg-orange-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600">
+                              💳 จ่ายส่วนที่เหลือ
+                            </a>
+                          )}
                           <a href={`/chat/${b.listing_id}`}
                             className="text-center border border-gray-200 text-gray-600 px-4 py-2.5 rounded-lg text-sm hover:bg-gray-50">
                             💬 แชทเจ้าของ
-                          </a>
-                          <a href={`/deposit/${b.id}`}
-                            className="text-center border border-purple-200 text-purple-500 px-4 py-2.5 rounded-lg text-sm hover:bg-purple-50">
-                            🔒 มัดจำ
                           </a>
                           <a href={`/review/${b.id}`}
                             className="text-center border border-yellow-200 text-yellow-600 px-4 py-2.5 rounded-lg text-sm hover:bg-yellow-50">
