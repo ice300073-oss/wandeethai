@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import QRCode from 'qrcode'
 
 const statusColor: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -28,6 +29,7 @@ const nights = (start: string, end: string) => {
 export default function TicketsPage() {
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [qrMap, setQrMap] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,6 +47,21 @@ export default function TicketsPage() {
     }
     fetchData()
   }, [])
+
+  // สร้าง QR สำหรับการจองที่ยืนยันแล้ว (ยังไม่เช็คอิน) — เจ้าของสแกนเพื่อเช็คอิน
+  useEffect(() => {
+    const gen = async () => {
+      const map: Record<string, string> = {}
+      for (const b of bookings) {
+        if (b.status === 'confirmed' && !b.checked_in_at) {
+          const url = `${window.location.origin}/checkin/${b.id}`
+          map[b.id] = await QRCode.toDataURL(url, { width: 180, margin: 1 })
+        }
+      }
+      setQrMap(map)
+    }
+    if (bookings.length) gen()
+  }, [bookings])
 
   if (loading) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -131,18 +148,22 @@ export default function TicketsPage() {
                       </div>
                     )}
 
-                    {/* รหัสจอง — โชว์เมื่อยืนยันแล้ว ใช้ตอนเช็คอิน */}
+                    {/* บัตรเช็คอิน — QR ให้เจ้าของสแกน หรือกรอกรหัส 8 หลักก็ได้ */}
                     {b.status === 'confirmed' && (
-                      <div className={`mt-4 rounded-xl px-4 py-3 text-center ${b.checked_in_at ? 'bg-teal-50 border border-teal-200' : 'bg-gray-900'}`}>
-                        {b.checked_in_at ? (
+                      b.checked_in_at ? (
+                        <div className="mt-4 rounded-xl px-4 py-3 text-center bg-teal-50 border border-teal-200">
                           <p className="text-teal-700 font-medium text-sm">✓ เช็คอินเรียบร้อยแล้ว</p>
-                        ) : (
-                          <>
-                            <p className="text-gray-400 text-xs mb-1">แสดงรหัสนี้ให้เจ้าของตอนเช็คอิน</p>
-                            <p className="text-white font-mono font-bold text-2xl tracking-widest">{code}</p>
-                          </>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-xl px-4 py-4 text-center bg-gray-900">
+                          <p className="text-gray-400 text-xs mb-3">ให้เจ้าของสแกน QR นี้ หรือกรอกรหัสด้านล่างตอนเช็คอิน</p>
+                          {qrMap[b.id] && (
+                            <img src={qrMap[b.id]} alt="QR เช็คอิน" className="w-36 h-36 mx-auto rounded-lg bg-white p-1.5 mb-3"/>
+                          )}
+                          <p className="text-gray-500 text-xs">รหัสสำรอง</p>
+                          <p className="text-white font-mono font-bold text-2xl tracking-widest">{code}</p>
+                        </div>
+                      )
                     )}
 
                     {/* ปุ่ม action */}
