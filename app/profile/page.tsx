@@ -31,6 +31,12 @@ export default function ProfilePage() {
   const [qrFile, setQrFile] = useState<File | null>(null)
   const [qrUploading, setQrUploading] = useState(false)
 
+  // เปิดแท็บตาม ?tab= ใน URL (เช่น หลังจ่ายเงินเสร็จเด้งมา /profile?tab=history)
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    if (tab === 'history' || tab === 'verify' || tab === 'info') setActiveTab(tab)
+  }, [])
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession()

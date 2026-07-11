@@ -99,7 +99,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
     }
 
     setMessage('✅ ชำระเงินสำเร็จ! รอการยืนยันจากเจ้าของ')
-    setTimeout(() => window.location.href = '/profile', 2000)
+    setTimeout(() => window.location.href = '/profile?tab=history', 2000)
     setLoading(false)
   }
 
