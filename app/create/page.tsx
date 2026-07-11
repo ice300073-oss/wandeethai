@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { isProfileCompleteForHosting, missingProfileFields } from '@/lib/profile'
+import { isProfileCompleteForHosting, missingProfileFields, displayName } from '@/lib/profile'
 
 const categories = [
   { value: 'homestay', label: '🏡 โฮมสเตย์' },
@@ -166,7 +166,7 @@ export default function CreateListing() {
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
         <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-400">{user?.email}</span>
+          <span className="text-sm text-gray-400">{displayName(user)}</span>
           <a href="/dashboard" className="text-gray-600 hover:text-orange-500 text-sm">← Dashboard</a>
         </div>
       </nav>

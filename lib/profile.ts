@@ -8,6 +8,17 @@ export function isProfileCompleteForHosting(user: any): boolean {
   return hasName && hasPhone && hasPayout
 }
 
+// ชื่อที่ใช้แสดงผล — ใช้ชื่อจริงก่อน, ถ้าไม่มีค่อยใช้ส่วนหน้าของอีเมล
+export function displayName(user: any): string {
+  return user?.user_metadata?.full_name?.trim() || user?.email?.split('@')[0] || 'ผู้ใช้'
+}
+
+// อีเมลที่โชว์ได้ — ซ่อนอีเมลจำลองของ LINE (ที่มีเลข ID) คืนค่าว่างถ้าเป็นอีเมลจำลอง
+export function publicEmail(user: any): string {
+  const e = user?.email || ''
+  return e.endsWith('@users.wandeethai.app') ? '' : e
+}
+
 export function missingProfileFields(user: any): string[] {
   const meta = user?.user_metadata || {}
   const missing: string[] = []

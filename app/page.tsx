@@ -219,8 +219,12 @@ export default function Home() {
               )}
               <div className="relative">
                 <button onClick={() => setMenuOpen(!menuOpen)}
-                  className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-sm hover:bg-orange-200 transition-colors">
-                  {user.email?.[0]?.toUpperCase()}
+                  className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-sm hover:bg-orange-200 transition-colors overflow-hidden">
+                  {user.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover"/>
+                  ) : (
+                    (user.user_metadata?.full_name || user.email)?.[0]?.toUpperCase()
+                  )}
                 </button>
                 {menuOpen && (
                   <>
@@ -228,7 +232,13 @@ export default function Home() {
                     <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}/>
                     <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                       <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                        <p className="text-sm font-medium text-gray-700 truncate">
+                          {user.user_metadata?.full_name || 'ผู้ใช้'}
+                        </p>
+                        {/* โชว์อีเมลเฉพาะอีเมลจริง — ซ่อนอีเมลจำลองของ LINE (มีเลข ID) */}
+                        {user.email && !user.email.endsWith('@users.wandeethai.app') && (
+                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                        )}
                       </div>
                       <a href="/tickets" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         🎫 ตั๋วของฉัน

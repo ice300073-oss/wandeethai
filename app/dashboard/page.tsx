@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { displayName } from '@/lib/profile'
 import { Toast, useToast } from '@/components/toast'
 
 function SkeletonRow() {
@@ -228,7 +229,7 @@ export default function Dashboard() {
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
         <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
         <div className="flex gap-4 items-center">
-          <span className="text-sm text-gray-500">{user?.email}</span>
+          <span className="text-sm text-gray-500">{displayName(user)}</span>
           <button onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')}
             className="text-sm text-red-400 hover:text-red-600">ออกจากระบบ</button>
         </div>

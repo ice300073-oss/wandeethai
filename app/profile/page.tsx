@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { publicEmail } from '@/lib/profile'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
@@ -237,12 +238,16 @@ export default function ProfilePage() {
 
       <div className="max-w-2xl mx-auto px-6 py-10">
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-2xl font-bold text-orange-500">
-            {form.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
+          <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-2xl font-bold text-orange-500 overflow-hidden">
+            {user?.user_metadata?.avatar_url ? (
+              <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover"/>
+            ) : (
+              form.full_name?.[0] || user?.email?.[0]?.toUpperCase() || '?'
+            )}
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800">{form.full_name || 'ผู้ใช้งาน'}</h2>
-            <p className="text-gray-400 text-sm">{user?.email}</p>
+            <h2 className="text-xl font-bold text-gray-800">{form.full_name || user?.user_metadata?.full_name || 'ผู้ใช้งาน'}</h2>
+            {publicEmail(user) && <p className="text-gray-400 text-sm">{publicEmail(user)}</p>}
           </div>
         </div>
 

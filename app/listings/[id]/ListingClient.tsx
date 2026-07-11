@@ -323,8 +323,12 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
 
           {user ? (
             <div className="flex gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold flex-shrink-0">
-                {user.email?.[0]?.toUpperCase()}
+              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold flex-shrink-0 overflow-hidden">
+                {user.user_metadata?.avatar_url ? (
+                  <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover"/>
+                ) : (
+                  (user.user_metadata?.full_name || user.email)?.[0]?.toUpperCase()
+                )}
               </div>
               <div className="flex-1 flex gap-2">
                 <input
