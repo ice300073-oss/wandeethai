@@ -434,8 +434,8 @@ export default function Dashboard() {
                   <div className="flex gap-2 flex-wrap">
                     {b.slip_url && (
                       <a href={b.slip_url} target="_blank" rel="noopener noreferrer"
-                        className="text-xs px-3 py-2 bg-orange-50 text-orange-500 rounded-lg hover:bg-orange-100 border border-orange-200">
-                        🧾 ดูสลิป
+                        className="text-xs px-3 py-2 bg-orange-50 text-orange-500 rounded-lg hover:bg-orange-100 border border-orange-200 font-medium">
+                        🧾 ดูสลิป — ต้องได้ ฿{b.total_price?.toLocaleString()}
                       </a>
                     )}
                     {b.status !== 'confirmed' && (

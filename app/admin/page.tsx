@@ -78,6 +78,8 @@ export default function AdminPage() {
   const saveSettings = async () => {
     setSavingSettings(true)
     const { error } = await supabase.from('site_settings').update({
+      site_name: settings.site_name,
+      hero_bg_url: settings.hero_bg_url,
       hero_title: settings.hero_title,
       hero_subtitle: settings.hero_subtitle,
       announcement: settings.announcement,
@@ -307,8 +309,8 @@ export default function AdminPage() {
                 <div className="flex gap-2 flex-wrap">
                   {booking.slip_url && (
                     <a href={booking.slip_url} target="_blank" rel="noopener noreferrer"
-                      className="text-xs px-3 py-2 bg-orange-50 text-orange-500 rounded-lg hover:bg-orange-100 border border-orange-200">
-                      🧾 ดูสลิป
+                      className="text-xs px-3 py-2 bg-orange-50 text-orange-500 rounded-lg hover:bg-orange-100 border border-orange-200 font-medium">
+                      🧾 ดูสลิป — ต้องได้ ฿{booking.total_price?.toLocaleString()}
                     </a>
                   )}
                   <button onClick={() => updateBookingStatus(booking.id, 'confirmed')}
@@ -364,6 +366,30 @@ export default function AdminPage() {
         {activeTab === 'settings' && (
           <div className="bg-white rounded-xl border border-gray-100 p-6 max-w-2xl space-y-5">
             <p className="text-sm text-gray-400">แก้ข้อความ/ข้อมูลเว็บได้เอง — กด "บันทึก" แล้วรีเฟรชหน้าแรก</p>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">🏷️ ชื่อเว็บ (โชว์ที่เมนูบนสุด)</label>
+              <input
+                value={settings.site_name || ''}
+                onChange={(e) => setS('site_name', e.target.value)}
+                placeholder="WanDeeThai"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">🖼️ รูปพื้นหลัง Hero (ใส่ลิงก์รูป)</label>
+              <input
+                value={settings.hero_bg_url || ''}
+                onChange={(e) => setS('hero_bg_url', e.target.value)}
+                placeholder="https://images.unsplash.com/..."
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
+              {settings.hero_bg_url && (
+                <img src={settings.hero_bg_url} alt="ตัวอย่างพื้นหลัง" className="mt-2 h-24 w-full object-cover rounded-lg border border-gray-100"/>
+              )}
+              <p className="text-xs text-gray-400 mt-1">
+                หารูปฟรีได้ที่ <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">unsplash.com</a> — คลิกขวารูปที่ชอบ → "คัดลอกที่อยู่ลิงก์รูปภาพ"
+              </p>
+            </div>
+
             {[
               { k: 'hero_title', label: 'สโลแกนหลัก (บรรทัดบน)', ph: 'เที่ยวคนเดียว' },
               { k: 'hero_subtitle', label: 'สโลแกนรอง (บรรทัดล่าง)', ph: 'ก็เจ๋งได้' },

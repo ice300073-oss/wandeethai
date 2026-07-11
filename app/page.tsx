@@ -195,7 +195,11 @@ export default function Home() {
           <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
             <span className="text-white text-sm font-bold">W</span>
           </div>
-          <h1 className="text-xl font-bold text-gray-900">WanDee<span className="text-orange-500">Thai</span></h1>
+          <h1 className="text-xl font-bold text-gray-900">
+            {settings.site_name
+              ? settings.site_name
+              : (<>WanDee<span className="text-orange-500">Thai</span></>)}
+          </h1>
         </a>
 
         <div className="flex gap-3 items-center">
@@ -272,7 +276,7 @@ export default function Home() {
       <section className="relative bg-gradient-to-br from-orange-600 via-orange-500 to-amber-600 text-white overflow-hidden">
         {/* รูปพื้นหลังท่องเที่ยว + overlay ส้มให้ตัวอักษรอ่านง่าย */}
         <img
-          src="https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600&q=70"
+          src={settings.hero_bg_url || 'https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600&q=70'}
           alt=""
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
           className="absolute inset-0 w-full h-full object-cover"
@@ -548,6 +552,7 @@ export default function Home() {
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <span className="text-gray-300 font-medium">WanDeeThai</span>
             <a href="/become-host" className="hover:text-gray-300 transition-colors">ลงประกาศ</a>
+            <a href="/activities" className="hover:text-gray-300 transition-colors">ที่เที่ยว</a>
             <a href="/about" className="hover:text-gray-300 transition-colors">เกี่ยวกับเรา/ช่วยเหลือ</a>
             <a href="/terms" className="hover:text-gray-300 transition-colors">เงื่อนไขการใช้งาน</a>
             <a href="/privacy" className="hover:text-gray-300 transition-colors">นโยบายความเป็นส่วนตัว</a>
