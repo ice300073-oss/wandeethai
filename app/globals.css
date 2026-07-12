@@ -25,3 +25,34 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+/* ===== ธีมสีแบรนด์ (แก้จากแอดมิน > ตั้งค่าเว็บ > สีธีม) =====
+   override คลาสสีส้มของ Tailwind ให้ชี้ไปตัวแปร --brand
+   ค่าเริ่มต้น = ส้ม; ถ้าแอดมินตั้งสีอื่น BrandTheme จะเปลี่ยน --brand ให้ทั้งเว็บ */
+:root { --brand: #f97316; --brand-600: #ea580c; }
+
+.bg-orange-500 { background-color: var(--brand) !important; }
+.bg-orange-600 { background-color: var(--brand-600) !important; }
+.hover\:bg-orange-500:hover { background-color: var(--brand) !important; }
+.hover\:bg-orange-600:hover { background-color: var(--brand-600) !important; }
+.text-orange-500 { color: var(--brand) !important; }
+.text-orange-600 { color: var(--brand-600) !important; }
+.hover\:text-orange-500:hover { color: var(--brand) !important; }
+.hover\:text-orange-600:hover { color: var(--brand-600) !important; }
+.border-orange-400 { border-color: var(--brand) !important; }
+.border-orange-500 { border-color: var(--brand) !important; }
+.focus\:border-orange-400:focus { border-color: var(--brand) !important; }
+
+/* เฉดอ่อน (พื้นหลัง/ขอบ/ตัวอักษรบนพื้นเข้ม) ผสมสีแบรนด์กับขาว */
+.bg-orange-50 { background-color: color-mix(in srgb, var(--brand) 7%, white) !important; }
+.bg-orange-100 { background-color: color-mix(in srgb, var(--brand) 15%, white) !important; }
+.hover\:bg-orange-50:hover { background-color: color-mix(in srgb, var(--brand) 7%, white) !important; }
+.hover\:bg-orange-100:hover { background-color: color-mix(in srgb, var(--brand) 15%, white) !important; }
+.border-orange-100 { border-color: color-mix(in srgb, var(--brand) 20%, white) !important; }
+.border-orange-200 { border-color: color-mix(in srgb, var(--brand) 32%, white) !important; }
+.hover\:border-orange-200:hover { border-color: color-mix(in srgb, var(--brand) 32%, white) !important; }
+.hover\:border-orange-300:hover { border-color: color-mix(in srgb, var(--brand) 45%, white) !important; }
+.text-orange-50 { color: color-mix(in srgb, var(--brand) 22%, white) !important; }
+.text-orange-100 { color: color-mix(in srgb, var(--brand) 32%, white) !important; }
+.text-orange-200 { color: color-mix(in srgb, var(--brand) 48%, white) !important; }
+.hover\:text-orange-200:hover { color: color-mix(in srgb, var(--brand) 48%, white) !important; }

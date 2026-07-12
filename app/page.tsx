@@ -193,9 +193,13 @@ export default function Home() {
       {/* ===== NAVBAR ===== */}
       <nav className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
         <a href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-            <span className="text-white text-sm font-bold">W</span>
-          </div>
+          {settings.logo_url ? (
+            <img src={settings.logo_url} alt="logo" className="h-8 w-auto max-w-[140px] object-contain"/>
+          ) : (
+            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+              <span className="text-white text-sm font-bold">W</span>
+            </div>
+          )}
           <h1 className="text-xl font-bold text-gray-900">
             {settings.site_name
               ? settings.site_name

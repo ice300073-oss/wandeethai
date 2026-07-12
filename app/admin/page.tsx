@@ -78,6 +78,8 @@ export default function AdminPage() {
     setSavingSettings(true)
     const { error } = await supabase.from('site_settings').update({
       site_name: settings.site_name,
+      logo_url: settings.logo_url,
+      theme_color: settings.theme_color,
       hero_bg_url: settings.hero_bg_url,
       hero_title: settings.hero_title,
       hero_subtitle: settings.hero_subtitle,
@@ -373,6 +375,33 @@ export default function AdminPage() {
                 onChange={(e) => setS('site_name', e.target.value)}
                 placeholder="WanDeeThai"
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">🏢 โลโก้ (ใส่ลิงก์รูป — เว้นว่าง = ใช้ตัวอักษร W)</label>
+              <input
+                value={settings.logo_url || ''}
+                onChange={(e) => setS('logo_url', e.target.value)}
+                placeholder="https://.../logo.png"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
+              {settings.logo_url && (
+                <img src={settings.logo_url} alt="ตัวอย่างโลโก้" className="mt-2 h-12 object-contain rounded border border-gray-100 bg-gray-50 p-1"/>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">🎨 สีธีมหลัก</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={settings.theme_color || '#f97316'}
+                  onChange={(e) => setS('theme_color', e.target.value)}
+                  className="w-14 h-11 rounded-lg border border-gray-200 cursor-pointer bg-white"/>
+                <input
+                  value={settings.theme_color || ''}
+                  onChange={(e) => setS('theme_color', e.target.value)}
+                  placeholder="#f97316 (ส้ม = ค่าเริ่มต้น)"
+                  className="flex-1 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">เปลี่ยนสีปุ่ม/ไฮไลต์หลักทั้งเว็บ (เช่น โรงแรมใช้สีน้ำเงิน)</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">🖼️ รูปพื้นหลัง Hero (ใส่ลิงก์รูป)</label>

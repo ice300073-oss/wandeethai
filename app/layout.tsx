@@ -4,6 +4,7 @@ import './globals.css'
 import Script from 'next/script'
 import SwRegister from './sw-register'
 import IssueReportButton from '@/components/IssueReportButton'
+import BrandTheme from '@/components/BrandTheme'
 
 const sarabun = Sarabun({
   subsets: ['thai', 'latin'],
@@ -87,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
         {children}
+        <BrandTheme />
         <IssueReportButton />
         <SwRegister />
       </body>
