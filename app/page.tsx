@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { isProfileCompleteForHosting, isAdmin } from '@/lib/profile'
+import NotificationBell from '@/components/NotificationBell'
 
 const PROVINCES = [
   'กรุงเทพมหานคร', 'เชียงใหม่', 'เชียงราย', 'ภูเก็ต', 'ชลบุรี',
@@ -217,6 +218,7 @@ export default function Home() {
                   กรอกข้อมูลให้ครบก่อนลงประกาศ →
                 </a>
               )}
+              <NotificationBell />
               <div className="relative">
                 <button onClick={() => setMenuOpen(!menuOpen)}
                   className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-sm hover:bg-orange-200 transition-colors overflow-hidden">
