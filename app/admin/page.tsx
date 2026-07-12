@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-
-const ADMIN_EMAILS = ['ice300073@gmail.com', 'ice300074@gmail.com']
+import { ADMIN_EMAILS } from '@/lib/profile'
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null)

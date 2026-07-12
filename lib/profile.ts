@@ -1,3 +1,10 @@
+// รายชื่ออีเมลแอดมิน — ใช้ร่วมกันทั้งเว็บ (หน้า /admin + ลิงก์เมนู)
+export const ADMIN_EMAILS = ['ice300073@gmail.com', 'ice300074@gmail.com']
+
+export function isAdmin(user: any): boolean {
+  return !!user?.email && ADMIN_EMAILS.includes(user.email)
+}
+
 // เช็คว่าโปรไฟล์ผู้ใช้กรอกครบพอจะลงประกาศที่พักได้หรือยัง
 // ต้องมี: ชื่อ, เบอร์โทร, และช่องทางรับเงินอย่างน้อย 1 อย่าง (PromptPay หรือ อัปโหลดรูป QR)
 export function isProfileCompleteForHosting(user: any): boolean {

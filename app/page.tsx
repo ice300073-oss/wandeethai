@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { isProfileCompleteForHosting } from '@/lib/profile'
+import { isProfileCompleteForHosting, isAdmin } from '@/lib/profile'
 
 const PROVINCES = [
   'กรุงเทพมหานคร', 'เชียงใหม่', 'เชียงราย', 'ภูเก็ต', 'ชลบุรี',
@@ -252,6 +252,11 @@ export default function Home() {
                       <a href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         📋 Dashboard
                       </a>
+                      {isAdmin(user) && (
+                        <a href="/admin" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50">
+                          ⚙️ โหมดแอดมิน
+                        </a>
+                      )}
                       <hr className="my-1 border-gray-100"/>
                       <button
                         onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')}
