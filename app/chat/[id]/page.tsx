@@ -1,4 +1,5 @@
 'use client'
+import SiteName from '@/components/SiteName'
 
 import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -133,7 +134,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     return (
       <main className="min-h-screen bg-gray-50">
         <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-          <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
+          <a href="/" className="text-2xl font-bold text-orange-500"><SiteName /></a>
           <a href="/dashboard" className="text-gray-600 hover:text-orange-500 text-sm">← Dashboard</a>
         </nav>
         <div className="max-w-lg mx-auto px-6 py-10">
@@ -165,7 +166,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center flex-shrink-0">
-        <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
+        <a href="/" className="text-2xl font-bold text-orange-500"><SiteName /></a>
         <a href={`/listings/${params.id}`} className="text-gray-600 hover:text-orange-500 text-sm">← กลับหน้าประกาศ</a>
       </nav>
 

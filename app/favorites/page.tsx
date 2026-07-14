@@ -1,4 +1,5 @@
 'use client'
+import SiteName from '@/components/SiteName'
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -44,7 +45,7 @@ export default function FavoritesPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
+        <a href="/" className="text-2xl font-bold text-orange-500"><SiteName /></a>
         <a href="/" className="text-gray-600 hover:text-orange-500 text-sm">← กลับหน้าหลัก</a>
       </nav>
 

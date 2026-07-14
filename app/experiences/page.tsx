@@ -1,4 +1,5 @@
 'use client'
+import SiteName from '@/components/SiteName'
 
 import { useEffect } from 'react'
 
@@ -65,7 +66,7 @@ export default function ExperiencesPage() {
 
       {/* ===== NAV ===== */}
       <nav className="absolute top-0 inset-x-0 z-30 px-6 py-4 flex justify-between items-center">
-        <a href="/" className="text-2xl font-bold text-white drop-shadow">WanDeeThai</a>
+        <a href="/" className="text-2xl font-bold text-white drop-shadow"><SiteName /></a>
         <a href="/" className="text-white/90 hover:text-white text-sm bg-white/10 backdrop-blur px-4 py-2 rounded-full">← หน้าหลัก</a>
       </nav>
 

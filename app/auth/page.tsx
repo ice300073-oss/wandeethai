@@ -1,4 +1,5 @@
 'use client'
+import SiteName from '@/components/SiteName'
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -99,7 +100,7 @@ export default function AuthPage() {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-8">
-          <h1 className="text-2xl font-bold text-orange-500 text-center mb-2">WanDeeThai</h1>
+          <h1 className="text-2xl font-bold text-orange-500 text-center mb-2"><SiteName /></h1>
           <p className="text-gray-400 text-center mb-8">รีเซ็ตรหัสผ่าน</p>
 
           <div className="space-y-4">
@@ -142,7 +143,7 @@ export default function AuthPage() {
     <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-md p-8">
 
-        <h1 className="text-2xl font-bold text-orange-500 text-center mb-2">WanDeeThai</h1>
+        <h1 className="text-2xl font-bold text-orange-500 text-center mb-2"><SiteName /></h1>
         <p className="text-gray-400 text-center mb-8">
           {isLogin ? 'เข้าสู่ระบบเพื่อใช้งาน' : 'สมัครสมาชิกฟรี'}
         </p>

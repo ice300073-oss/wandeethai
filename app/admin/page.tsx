@@ -1,4 +1,5 @@
 'use client'
+import SiteName from '@/components/SiteName'
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -158,7 +159,7 @@ export default function AdminPage() {
     <main className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <a href="/" className="text-lg sm:text-2xl font-bold text-orange-500 shrink-0">WanDeeThai</a>
+          <a href="/" className="text-lg sm:text-2xl font-bold text-orange-500 shrink-0"><SiteName /></a>
           <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-medium shrink-0">Admin</span>
         </div>
         <p className="text-gray-400 text-xs sm:text-sm truncate max-w-[40%]">{user?.email}</p>

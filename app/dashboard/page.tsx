@@ -1,4 +1,5 @@
 'use client'
+import SiteName from '@/components/SiteName'
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -259,7 +260,7 @@ export default function Dashboard() {
       )}
 
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
+        <a href="/" className="text-2xl font-bold text-orange-500"><SiteName /></a>
         <div className="flex gap-3 items-center">
           <NotificationBell />
           <span className="text-sm text-gray-500">{displayName(user)}</span>

@@ -1,3 +1,4 @@
+import SiteName from '@/components/SiteName'
 export const metadata = {
   title: 'ที่เที่ยวสัตหีบ & กิจกรรมแนะนำ — WanDeeThai',
   description: 'รวมสถานที่ท่องเที่ยวและกิจกรรมน่าสนใจในสัตหีบ สำหรับนักท่องเที่ยวคนเดี่ยว',
@@ -15,7 +16,7 @@ export default function ActivitiesPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
+        <a href="/" className="text-2xl font-bold text-orange-500"><SiteName /></a>
         <a href="/" className="text-gray-600 hover:text-orange-500 text-sm">← กลับหน้าหลัก</a>
       </nav>
 

@@ -1,4 +1,5 @@
 'use client'
+import SiteName from '@/components/SiteName'
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -164,7 +165,7 @@ export default function CreateListing() {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
+        <a href="/" className="text-2xl font-bold text-orange-500"><SiteName /></a>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-400">{displayName(user)}</span>
           <a href="/dashboard" className="text-gray-600 hover:text-orange-500 text-sm">← Dashboard</a>

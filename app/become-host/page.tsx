@@ -1,3 +1,4 @@
+import SiteName from '@/components/SiteName'
 export const metadata = {
   title: 'ลงประกาศที่พักฟรี — WanDeeThai',
   description: 'ลงที่พักของคุณบน WanDeeThai ฟรี ไม่เก็บค่าคอมมิชชั่น 3 เดือนแรก เข้าถึงนักท่องเที่ยวคนเดี่ยวทั่วไทย',
@@ -22,7 +23,7 @@ export default function BecomeHost() {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
+        <a href="/" className="text-2xl font-bold text-orange-500"><SiteName /></a>
         <a href="/" className="text-gray-600 hover:text-orange-500 text-sm">← กลับหน้าหลัก</a>
       </nav>
 
@@ -87,7 +88,7 @@ export default function BecomeHost() {
       </section>
 
       <footer className="bg-gray-900 text-gray-400 py-8 px-6 text-center text-sm">
-        <p className="text-white font-semibold mb-1">WanDeeThai</p>
+        <p className="text-white font-semibold mb-1"><SiteName /></p>
         <p>© 2025 แพลตฟอร์มท่องเที่ยวคนเดี่ยวของคนไทย</p>
       </footer>
     </main>

@@ -1,3 +1,4 @@
+import SiteName from '@/components/SiteName'
 export const metadata = {
   title: 'เกี่ยวกับเรา & ช่วยเหลือ — WanDeeThai',
   description: 'WanDeeThai แพลตฟอร์มท่องเที่ยวคนเดี่ยวของคนไทย — วิธีใช้งาน คำถามที่พบบ่อย และช่องทางติดต่อ',
@@ -16,7 +17,7 @@ export default function AboutPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <a href="/" className="text-2xl font-bold text-orange-500">WanDeeThai</a>
+        <a href="/" className="text-2xl font-bold text-orange-500"><SiteName /></a>
         <a href="/" className="text-gray-600 hover:text-orange-500 text-sm">← กลับหน้าหลัก</a>
       </nav>
 
@@ -99,7 +100,7 @@ export default function AboutPage() {
       </div>
 
       <footer className="bg-gray-900 text-gray-400 py-8 px-6 text-center text-sm">
-        <p className="text-white font-semibold mb-1">WanDeeThai</p>
+        <p className="text-white font-semibold mb-1"><SiteName /></p>
         <p>© 2025 แพลตฟอร์มท่องเที่ยวคนเดี่ยวของคนไทย</p>
       </footer>
     </main>

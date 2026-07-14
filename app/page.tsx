@@ -1,4 +1,5 @@
 'use client'
+import SiteName from '@/components/SiteName'
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -619,7 +620,7 @@ export default function Home() {
       <footer className="bg-gray-900 text-gray-500 py-6 px-6 text-xs">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-3 flex-wrap justify-center">
-            <span className="text-gray-300 font-medium">WanDeeThai</span>
+            <span className="text-gray-300 font-medium"><SiteName /></span>
             <a href="/experiences" className="hover:text-gray-300 transition-colors">กิจกรรม</a>
             <a href="/activities" className="hover:text-gray-300 transition-colors">ที่เที่ยว</a>
             <a href="/about" className="hover:text-gray-300 transition-colors">เกี่ยวกับเรา/ช่วยเหลือ</a>
