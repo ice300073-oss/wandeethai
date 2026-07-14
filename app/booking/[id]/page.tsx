@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-// สร้าง set ของวันที่ถูกจองทั้งหมด
+// สร้าง set ของ "คืน" ที่ถูกจอง — ไม่รวมวันเช็คเอาท์ (end) เพราะวันนั้นห้องว่างให้คนใหม่เช็คอินได้
+// เช่น จองเข้า 13 ออก 14 = จองแค่คืนวันที่ 13, วันที่ 14 ยังว่าง
 function getBlockedDates(bookedRanges: {start: string, end: string}[]): Set<string> {
   const blocked = new Set<string>()
   for (const range of bookedRanges) {
-    const start = new Date(range.start)
     const end = new Date(range.end)
-    const cur = new Date(start)
-    while (cur <= end) {
+    const cur = new Date(range.start)
+    while (cur < end) {
       blocked.add(cur.toISOString().split('T')[0])
       cur.setDate(cur.getDate() + 1)
     }
@@ -148,10 +148,10 @@ export default function BookingPage({ params }: { params: { id: string } }) {
 
   // ตรวจสอบว่าในช่วงที่เลือกมีวันที่ blocked ไหม
   const hasBlockedInRange = (start: string, end: string) => {
-    const s = new Date(start)
     const e = new Date(end)
-    const cur = new Date(s)
-    while (cur <= e) {
+    const cur = new Date(start)
+    // เช็คเฉพาะคืนที่จะนอน [start, end) — ไม่รวมวันเช็คเอาท์ (end)
+    while (cur < e) {
       if (blockedDates.has(formatDate(cur))) return true
       cur.setDate(cur.getDate() + 1)
     }
@@ -202,7 +202,8 @@ export default function BookingPage({ params }: { params: { id: string } }) {
     // Double-check ผ่านฟังก์ชันที่มองเห็นการจองของทุกคน (การเช็คแบบเดิมโดน RLS บังตา
     // ทำให้เห็นแต่ของตัวเอง เลยจองชนกันได้เงียบๆ)
     const { data: allBlocked } = await supabase.rpc('get_blocked_dates', { p_listing: params.id })
-    const hasConflict = (allBlocked || []).some((r: any) => r.start_date <= endDate && r.end_date >= startDate)
+    // ชนกันเฉพาะเมื่อช่วง "คืน" ทับกันจริง (ครึ่งเปิด) — วันเช็คเอาท์ = วันเช็คอินของคนถัดไป ไม่ถือว่าชน
+    const hasConflict = (allBlocked || []).some((r: any) => r.start_date < endDate && r.end_date > startDate)
 
     if (hasConflict) {
       setMessage('❌ ช่วงวันที่นี้เพิ่งถูกจองไป กรุณาเลือกวันอื่น')
