@@ -254,7 +254,7 @@ export default function ProfilePage() {
         <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
           {[
             { key: 'info', label: 'ข้อมูลส่วนตัว' },
-            { key: 'verify', label: 'ยืนยันตัวตน' },
+            // เวอร์ชันนี้ไม่มีการยืนยันตัวตนฝั่งเจ้าของ (มีแค่ผู้พัก + admin)
             { key: 'history', label: 'ประวัติการจอง' },
           ].map((tab) => (
             <button key={tab.key}

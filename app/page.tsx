@@ -210,17 +210,20 @@ export default function Home() {
         <div className="flex gap-3 items-center">
           {user ? (
             <>
-              {isProfileCompleteForHosting(user) ? (
-                <a href="/create"
-                  className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 text-sm font-medium transition-colors shadow-sm flex items-center gap-1">
-                  <span>+</span> ลงประกาศ
-                </a>
-              ) : (
-                <a href="/profile"
-                  title="กรอกข้อมูลโปรไฟล์ให้ครบก่อนลงประกาศได้"
-                  className="border border-orange-300 text-orange-500 px-4 py-2 rounded-lg hover:bg-orange-50 text-sm font-medium transition-colors hidden sm:flex items-center gap-1">
-                  กรอกข้อมูลให้ครบก่อนลงประกาศ →
-                </a>
+              {/* เวอร์ชันนี้มีแค่ผู้พัก + admin — ปุ่มลงประกาศโผล่เฉพาะแอดมิน (โรงแรม) เท่านั้น */}
+              {isAdmin(user) && (
+                isProfileCompleteForHosting(user) ? (
+                  <a href="/create"
+                    className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 text-sm font-medium transition-colors shadow-sm flex items-center gap-1">
+                    <span>+</span> ลงประกาศ
+                  </a>
+                ) : (
+                  <a href="/profile"
+                    title="กรอกข้อมูลโปรไฟล์ให้ครบก่อนลงประกาศได้"
+                    className="border border-orange-300 text-orange-500 px-4 py-2 rounded-lg hover:bg-orange-50 text-sm font-medium transition-colors hidden sm:flex items-center gap-1">
+                    กรอกข้อมูลให้ครบก่อนลงประกาศ →
+                  </a>
+                )
               )}
               <NotificationBell />
               <div className="relative">
@@ -255,13 +258,15 @@ export default function Home() {
                       <a href="/favorites" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         ❤️ รายการโปรด
                       </a>
-                      <a href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        📋 Dashboard
-                      </a>
                       {isAdmin(user) && (
-                        <a href="/admin" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50">
-                          ⚙️ โหมดแอดมิน
-                        </a>
+                        <>
+                          <a href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                            📋 Dashboard
+                          </a>
+                          <a href="/admin" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50">
+                            ⚙️ โหมดแอดมิน
+                          </a>
+                        </>
                       )}
                       <hr className="my-1 border-gray-100"/>
                       <button
@@ -594,7 +599,6 @@ export default function Home() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <span className="text-gray-300 font-medium">WanDeeThai</span>
-            <a href="/become-host" className="hover:text-gray-300 transition-colors">ลงประกาศ</a>
             <a href="/experiences" className="hover:text-gray-300 transition-colors">กิจกรรม</a>
             <a href="/activities" className="hover:text-gray-300 transition-colors">ที่เที่ยว</a>
             <a href="/about" className="hover:text-gray-300 transition-colors">เกี่ยวกับเรา/ช่วยเหลือ</a>
