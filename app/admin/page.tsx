@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ADMIN_EMAILS } from '@/lib/profile'
 
@@ -16,48 +16,52 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings' | 'hosts' | 'settings' | 'reports'>('overview')
   const [loading, setLoading] = useState(true)
 
+  const loadData = useCallback(async () => {
+    const { data: listingData } = await supabase
+      .from('listings').select('*').order('created_at', { ascending: false })
+    setListings(listingData || [])
+
+    const { data: bookingData } = await supabase
+      .from('bookings').select('*, listings(title)').order('created_at', { ascending: false })
+    setBookings(bookingData || [])
+
+    const { data: profileData } = await supabase
+      .from('profiles').select('*').order('created_at', { ascending: false })
+    setProfiles(profileData || [])
+
+    const { data: settingsData } = await supabase
+      .from('site_settings').select('*').eq('id', 1).single()
+    setSettings(settingsData || {})
+
+    const { data: reportData } = await supabase
+      .from('reports').select('*, listings(title)').order('created_at', { ascending: false })
+    setReports(reportData || [])
+
+    setLoading(false)
+  }, [])
+
   useEffect(() => {
-    const fetchData = async () => {
+    const init = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       const user = session?.user ?? null
-      if (!user || !ADMIN_EMAILS.includes(user.email)) {
-        window.location.href = '/'
-        return
-      }
+      if (!user || !ADMIN_EMAILS.includes(user.email)) { window.location.href = '/'; return }
       setUser(user)
-
-      const { data: listingData } = await supabase
-        .from('listings')
-        .select('*')
-        .order('created_at', { ascending: false })
-      setListings(listingData || [])
-
-      const { data: bookingData } = await supabase
-        .from('bookings')
-        .select('*, listings(title)')
-        .order('created_at', { ascending: false })
-      setBookings(bookingData || [])
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-      setProfiles(profileData || [])
-
-      const { data: settingsData } = await supabase
-        .from('site_settings').select('*').eq('id', 1).single()
-      setSettings(settingsData || {})
-
-      const { data: reportData } = await supabase
-        .from('reports')
-        .select('*, listings(title)')
-        .order('created_at', { ascending: false })
-      setReports(reportData || [])
-
-      setLoading(false)
+      loadData()
     }
-    fetchData()
-  }, [])
+    init()
+  }, [loadData])
+
+  // realtime: การจอง/ประกาศ/รายงาน/ผู้ใช้ เปลี่ยน → แอดมินอัปเดตเอง ไม่ต้องรีเฟรช
+  useEffect(() => {
+    const ch = supabase
+      .channel('admin-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadData())
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [loadData])
 
   const toggleListing = async (id: string, current: boolean) => {
     await supabase.from('listings').update({ is_available: !current }).eq('id', id)

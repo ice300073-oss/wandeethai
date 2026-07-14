@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { isProfileCompleteForHosting, isAdmin } from '@/lib/profile'
 import NotificationBell from '@/components/NotificationBell'
@@ -108,6 +108,27 @@ export default function Home() {
     }
     fetchData()
   }, [])
+
+  // ดึงรายการที่พักใหม่ (ใช้ตอน realtime มีที่พักเปลี่ยน)
+  const refreshListings = useCallback(async () => {
+    const { data } = await supabase
+      .from('listings').select('*').eq('is_available', true)
+      .order('created_at', { ascending: false })
+    const all = data || []
+    setListings(all)
+    const counts: Record<string, number> = {}
+    all.forEach((l: any) => { counts[l.category] = (counts[l.category] || 0) + 1 })
+    setCategoryCounts(counts)
+  }, [])
+
+  // realtime: มีที่พักใหม่/แก้ไข/ปิด → หน้าแรกอัปเดตเอง ไม่ต้องรีเฟรช
+  useEffect(() => {
+    const ch = supabase
+      .channel('home-listings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, () => refreshListings())
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [refreshListings])
 
   const chooseRole = async (role: string) => {
     setNeedRole(false)

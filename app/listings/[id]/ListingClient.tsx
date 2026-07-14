@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function ListingDetail({ params }: { params: { id: string } }) {
@@ -77,6 +77,36 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
     }
     fetchData()
   }, [params.id])
+
+  // ดึงคอมเมนต์ใหม่ (ใช้ตอน realtime มีคอมเมนต์เปลี่ยน)
+  const refetchComments = useCallback(async () => {
+    const { data: commentData } = await supabase
+      .from('comments').select('*').eq('listing_id', params.id).order('created_at', { ascending: true })
+    const ids = Array.from(new Set((commentData || []).map((c: any) => c.user_id).filter(Boolean)))
+    let map: Record<string, any> = {}
+    if (ids.length) {
+      const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', ids)
+      map = Object.fromEntries((profs || []).map((p: any) => [p.id, p]))
+    }
+    setComments((commentData || []).map((c: any) => ({ ...c, profiles: map[c.user_id] || null })))
+  }, [params.id])
+
+  const refetchReviews = useCallback(async () => {
+    const { data } = await supabase
+      .from('reviews').select('*').eq('listing_id', params.id).order('created_at', { ascending: false })
+    setReviews(data || [])
+    setAvgRating(data && data.length ? Math.round((data.reduce((s: number, r: any) => s + r.rating, 0) / data.length) * 10) / 10 : 0)
+  }, [params.id])
+
+  // realtime: คอมเมนต์/รีวิวของคนอื่นเด้งขึ้นเอง ไม่ต้องรีเฟรช
+  useEffect(() => {
+    const ch = supabase
+      .channel(`listing-${params.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `listing_id=eq.${params.id}` }, () => refetchComments())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews', filter: `listing_id=eq.${params.id}` }, () => refetchReviews())
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [params.id, refetchComments, refetchReviews])
 
   const handleReport = async () => {
     if (!user) { window.location.href = `/auth?next=/listings/${params.id}`; return }
