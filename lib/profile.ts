@@ -1,5 +1,6 @@
 // รายชื่ออีเมลแอดมิน — ใช้ร่วมกันทั้งเว็บ (หน้า /admin + ลิงก์เมนู)
-export const ADMIN_EMAILS = ['ice300073@gmail.com', 'ice300074@gmail.com']
+// admin@wandeethai.app = บัญชีเดโมสำหรับให้ลูกค้าที่จะเช่าเว็บลองใช้ (รหัสตั้งใน Supabase ไม่ใช่ในโค้ด)
+export const ADMIN_EMAILS = ['ice300073@gmail.com', 'ice300074@gmail.com', 'admin@wandeethai.app']
 
 export function isAdmin(user: any): boolean {
   return !!user?.email && ADMIN_EMAILS.includes(user.email)
