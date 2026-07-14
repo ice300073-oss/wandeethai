@@ -58,8 +58,7 @@ export default function Dashboard() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const { toast, showToast, hideToast } = useToast()
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
       const { data: { session } } = await supabase.auth.getSession()
       const user = session?.user ?? null
       setUser(user)
@@ -109,9 +108,18 @@ export default function Dashboard() {
         }
       }
       setLoading(false)
-    }
-    fetchData()
   }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  // realtime: อัปเดตเองเมื่อมีการจอง/เปลี่ยนสถานะ ไม่ต้องรีเฟรช
+  useEffect(() => {
+    const ch = supabase
+      .channel('dashboard-bookings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchData())
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [fetchData])
 
   const toggleAvailable = async (id: string, current: boolean) => {
     showToast('กำลังอัปเดต...', 'loading')

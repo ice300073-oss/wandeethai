@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import QRCode from 'qrcode'
 
@@ -31,22 +31,36 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true)
   const [qrMap, setQrMap] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user ?? null
-      if (!user) { window.location.href = '/auth?next=/tickets'; return }
+  const fetchData = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user ?? null
+    if (!user) { window.location.href = '/auth?next=/tickets'; return }
 
-      const { data } = await supabase
-        .from('bookings')
-        .select('*, listings(*)')
-        .eq('renter_id', user.id)
-        .order('created_at', { ascending: false })
-      setBookings(data || [])
-      setLoading(false)
-    }
-    fetchData()
+    const { data } = await supabase
+      .from('bookings')
+      .select('*, listings(*)')
+      .eq('renter_id', user.id)
+      .order('created_at', { ascending: false })
+    setBookings(data || [])
+    setLoading(false)
+
+    // realtime: สถานะเปลี่ยน (เจ้าของยืนยัน/เช็คอิน) อัปเดตเองไม่ต้องรีเฟรช
+    return user.id
   }, [])
+
+  useEffect(() => {
+    let channel: any
+    fetchData().then((uid) => {
+      if (!uid) return
+      channel = supabase
+        .channel('tickets-bookings')
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'bookings', filter: `renter_id=eq.${uid}`,
+        }, () => fetchData())
+        .subscribe()
+    })
+    return () => { if (channel) supabase.removeChannel(channel) }
+  }, [fetchData])
 
   // สร้าง QR สำหรับการจองที่ยืนยันแล้ว (ยังไม่เช็คอิน) — เจ้าของสแกนเพื่อเช็คอิน
   useEffect(() => {
