@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { displayName } from '@/lib/profile'
 import { Toast, useToast } from '@/components/toast'
 import NotificationBell from '@/components/NotificationBell'
+import QrScanner from '@/components/QrScanner'
 
 function SkeletonRow() {
   return (
@@ -41,7 +42,19 @@ export default function Dashboard() {
   const [bookings, setBookings] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'listings' | 'bookings' | 'analytics'>('listings')
   const [showWalkIn, setShowWalkIn] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
   const [walkIn, setWalkIn] = useState({ listing_id: '', guest_name: '', start_date: '', end_date: '' })
+
+  // อ่านผลสแกน QR → ถ้าเป็นลิงก์เช็คอินของเรา ให้ไปหน้าเช็คอิน (เช็คสิทธิ์เจ้าของ + บันทึกให้)
+  const handleScan = (text: string) => {
+    const m = text.match(/\/checkin\/([0-9a-fA-F-]{36})/)
+    if (m) {
+      window.location.href = `/checkin/${m[1]}`
+    } else {
+      showToast('QR นี้ไม่ใช่ตั๋วเช็คอิน', 'error')
+      setShowScanner(false)
+    }
+  }
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const { toast, showToast, hideToast } = useToast()
 
@@ -212,6 +225,7 @@ export default function Dashboard() {
   return (
     <main className="min-h-screen bg-gray-50">
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast}/>}
+      {showScanner && <QrScanner onClose={() => setShowScanner(false)} onScan={handleScan}/>}
 
       {/* Confirm Delete Modal */}
       {confirmDelete && (
@@ -364,10 +378,16 @@ export default function Dashboard() {
         {/* Tab: การจอง */}
         {activeTab === 'bookings' && (
           <div className="space-y-3">
-            <button onClick={() => setShowWalkIn(!showWalkIn)}
-              className="text-sm bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
-              ➕ เพิ่มการจองเอง (walk-in / จองทางโทร)
-            </button>
+            <div className="flex gap-2 flex-wrap">
+              <button onClick={() => setShowWalkIn(!showWalkIn)}
+                className="text-sm bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
+                ➕ เพิ่มการจองเอง (walk-in / จองทางโทร)
+              </button>
+              <button onClick={() => setShowScanner(true)}
+                className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700">
+                📷 สแกน QR เช็คอิน
+              </button>
+            </div>
             {showWalkIn && (
               <div className="bg-white rounded-xl border border-orange-200 p-5 space-y-3">
                 <p className="text-sm text-gray-500">บันทึกคนที่จองทางโทร/หน้าร้าน — วันนั้นจะถูกบล็อกกันจองชนกันอัตโนมัติ</p>
