@@ -9,7 +9,6 @@ import QRCode from 'qrcode'
 export default function PaymentPage({ params }: { params: { id: string } }) {
   const [booking, setBooking] = useState<any>(null)
   const [listing, setListing] = useState<any>(null)
-  const [method, setMethod] = useState<'promptpay' | 'bank'>('promptpay')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [slip, setSlip] = useState<string | null>(null)
@@ -196,22 +195,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
           </p>
         )}
 
-        <div className="flex gap-3 mb-6">
-          <button
-            onClick={() => setMethod('promptpay')}
-            className={`flex-1 py-3 rounded-xl border-2 font-medium text-sm transition-all ${method === 'promptpay' ? 'border-orange-500 bg-orange-50 text-orange-500' : 'border-gray-200 text-gray-500'}`}>
-            📱 PromptPay
-          </button>
-          <button
-            onClick={() => setMethod('bank')}
-            className={`flex-1 py-3 rounded-xl border-2 font-medium text-sm transition-all ${method === 'bank' ? 'border-orange-500 bg-orange-50 text-orange-500' : 'border-gray-200 text-gray-500'}`}>
-            🏦 โอนธนาคาร
-          </button>
-        </div>
-
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-
-          {method === 'promptpay' && (
             <div className="space-y-5">
               <div className="text-center">
                 <p className="text-sm text-gray-500 mb-3">สแกน QR เพื่อชำระเงิน</p>
@@ -254,56 +238,6 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
                 {loading ? 'กำลังดำเนินการ...' : `ยืนยันการชำระเงิน ฿${payNow.toLocaleString()}`}
               </button>
             </div>
-          )}
-
-          {method === 'bank' && (
-            <div className="space-y-5">
-              <div className="bg-gray-50 rounded-xl p-5">
-                <h4 className="font-semibold text-gray-800 mb-3">ข้อมูลบัญชีโอนเงิน</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">ธนาคาร</span>
-                    <span className="font-medium text-gray-800">กสิกรไทย (KBANK)</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">เลขที่บัญชี</span>
-                    <span className="font-medium text-gray-800 select-all">XXX-X-XXXXX-X</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">ชื่อบัญชี</span>
-                    <span className="font-medium text-gray-800">ชื่อเจ้าของบัญชี</span>
-                  </div>
-                  <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
-                    <span className="text-gray-500 font-medium">ยอดที่ต้องโอน</span>
-                    <span className="font-bold text-orange-500 text-lg">฿{payNow.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">อัปโหลดสลิปโอนเงิน</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleSlipUpload}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white"/>
-                {slip && (
-                  <img src={slip} alt="slip" className="mt-3 rounded-lg w-full max-h-48 object-cover"/>
-                )}
-              </div>
-
-              {message && (
-                <p className="text-sm text-center py-3 bg-gray-50 rounded-lg text-gray-700">{message}</p>
-              )}
-
-              <button
-                onClick={handlePayment}
-                disabled={loading || !slipFile}
-                className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50">
-                {loading ? 'กำลังดำเนินการ...' : `ยืนยันการชำระเงิน ฿${payNow.toLocaleString()}`}
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </main>
