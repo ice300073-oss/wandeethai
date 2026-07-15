@@ -5,7 +5,7 @@ const BASE = 'https://wandeethai.vercel.app'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
-    '', '/listings', '/about', '/become-host', '/experiences', '/activities', '/terms', '/privacy',
+    '', '/listings', '/about', '/become-host', '/experiences', '/restaurants', '/activities', '/terms', '/privacy',
   ].map((p) => ({ url: `${BASE}${p}`, lastModified: new Date() }))
 
   let listingPages: MetadataRoute.Sitemap = []

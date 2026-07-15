@@ -622,6 +622,7 @@ export default function Home() {
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <span className="text-gray-300 font-medium"><SiteName /></span>
             <a href="/experiences" className="hover:text-gray-300 transition-colors">กิจกรรม</a>
+            <a href="/restaurants" className="hover:text-gray-300 transition-colors">ร้านอาหาร</a>
             <a href="/activities" className="hover:text-gray-300 transition-colors">ที่เที่ยว</a>
             <a href="/about" className="hover:text-gray-300 transition-colors">เกี่ยวกับเรา/ช่วยเหลือ</a>
             <a href="/terms" className="hover:text-gray-300 transition-colors">เงื่อนไขการใช้งาน</a>
