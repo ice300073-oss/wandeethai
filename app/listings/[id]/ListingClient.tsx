@@ -69,7 +69,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
       let commenterMap: Record<string, any> = {}
       if (commentUserIds.length > 0) {
         const { data: commenterProfiles } = await supabase
-          .from('profiles').select('id, full_name').in('id', commentUserIds)
+          .from('public_profiles').select('id, full_name').in('id', commentUserIds)
         commenterMap = Object.fromEntries((commenterProfiles || []).map((p: any) => [p.id, p]))
       }
       setComments((commentData || []).map((c: any) => ({ ...c, profiles: commenterMap[c.user_id] || null })))
@@ -86,7 +86,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
     const ids = Array.from(new Set((commentData || []).map((c: any) => c.user_id).filter(Boolean)))
     let map: Record<string, any> = {}
     if (ids.length) {
-      const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', ids)
+      const { data: profs } = await supabase.from('public_profiles').select('id, full_name').in('id', ids)
       map = Object.fromEntries((profs || []).map((p: any) => [p.id, p]))
     }
     setComments((commentData || []).map((c: any) => ({ ...c, profiles: map[c.user_id] || null })))

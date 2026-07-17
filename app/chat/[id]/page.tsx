@@ -52,7 +52,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           (threadRows || []).flatMap((m: any) => [m.sender_id, m.receiver_id]).filter((id: string) => id && id !== me.id)
         ))
         if (ids.length > 0) {
-          const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', ids)
+          const { data: profs } = await supabase.from('public_profiles').select('id, full_name').in('id', ids)
           setInboxThreads(ids.map((id) => ({ id, full_name: profs?.find((p: any) => p.id === id)?.full_name })))
         }
         setReady(true)
@@ -62,7 +62,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       if (!counterpartId) { setReady(true); return }
 
       if (counterpartId !== listingData.owner_id) {
-        const { data: prof } = await supabase.from('profiles').select('id, full_name').eq('id', counterpartId).single()
+        const { data: prof } = await supabase.from('public_profiles').select('id, full_name').eq('id', counterpartId).single()
         setOtherUser(prof || { id: counterpartId })
       } else {
         setOtherUser({ id: counterpartId, full_name: 'เจ้าของที่พัก' })

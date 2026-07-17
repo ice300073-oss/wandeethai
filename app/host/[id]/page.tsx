@@ -18,7 +18,7 @@ export default function HostProfile({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchData = async () => {
       const { data: prof } = await supabase
-        .from('profiles').select('*').eq('id', params.id).single()
+        .from('public_profiles').select('*').eq('id', params.id).single()
       setProfile(prof)
 
       const { data: list } = await supabase

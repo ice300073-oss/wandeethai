@@ -41,15 +41,12 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
         setBooking(bookingData)
         setListing(bookingData.listings)
 
-        // ดึง PromptPay / รูป QR ของเจ้าของที่พักรายนี้ (เงินเข้าเจ้าของตรงๆ)
+        // ดึง PromptPay / รูป QR ของเจ้าของที่พัก ผ่าน RPC (ไม่เปิดเบอร์/ข้อมูลอื่นของเจ้าของ)
         let number = FALLBACK_PROMPTPAY
-        const ownerId = bookingData.listings?.owner_id
-        if (ownerId) {
-          const { data: owner } = await supabase
-            .from('profiles').select('promptpay, qr_image_url').eq('id', ownerId).single()
-          if (owner?.promptpay) number = owner.promptpay
-          if (owner?.qr_image_url) setOwnerQrImage(owner.qr_image_url)
-        }
+        const { data: pay } = await supabase.rpc('get_owner_payment', { p_listing: bookingData.listing_id })
+        const info = Array.isArray(pay) ? pay[0] : pay
+        if (info?.promptpay) number = info.promptpay
+        if (info?.qr_image_url) setOwnerQrImage(info.qr_image_url)
         setPayTo(number)
       }
     }
