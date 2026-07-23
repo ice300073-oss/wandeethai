@@ -3,6 +3,7 @@ import SiteName from '@/components/SiteName'
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import TripMap from '@/components/TripMap'
 
 export default function ListingDetail({ params }: { params: { id: string } }) {
   const [listing, setListing] = useState<any>(null)
@@ -16,6 +17,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
   const [commentLoading, setCommentLoading] = useState(false)
   const [viewCount, setViewCount] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [attractions, setAttractions] = useState<any[]>([])
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
   const shareLine = () => window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}`, '_blank')
@@ -73,6 +75,11 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
         commenterMap = Object.fromEntries((commenterProfiles || []).map((p: any) => [p.id, p]))
       }
       setComments((commentData || []).map((c: any) => ({ ...c, profiles: commenterMap[c.user_id] || null })))
+
+      // จุดเที่ยว (แอดมินเพิ่ม) สำหรับแผนที่เส้นทาง
+      const { data: attrData } = await supabase
+        .from('attractions').select('*').order('sort_order', { ascending: true })
+      setAttractions(attrData || [])
 
       setLoading(false)
     }
@@ -300,23 +307,28 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
                     เปิดใน Google Maps ↗
                   </a>
                 </div>
-                <div className="rounded-xl overflow-hidden border border-gray-100">
-                  <iframe
-                    title="แผนที่ที่พัก"
-                    width="100%" height="240" loading="lazy"
-                    style={{ border: 0 }}
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={
-                      (typeof listing.lat === 'number' && typeof listing.lng === 'number')
-                        ? `https://maps.google.com/maps?q=${listing.lat},${listing.lng}&z=17&output=embed`
-                        : `https://maps.google.com/maps?q=${encodeURIComponent(listing.location)}&z=15&output=embed`
-                    }/>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  {(typeof listing.lat === 'number' && typeof listing.lng === 'number')
-                    ? '📍 ตำแหน่งที่เจ้าของปักหมุดไว้'
-                    : '📍 ตำแหน่งโดยประมาณจากที่อยู่ที่ระบุ'}
-                </p>
+                {(typeof listing.lat === 'number' && typeof listing.lng === 'number') ? (
+                  <>
+                    {/* แผนที่จริง + เส้นทางไปจุดเที่ยว (Leaflet) */}
+                    <TripMap
+                      center={{ lat: listing.lat, lng: listing.lng }}
+                      title={listing.title}
+                      attractions={attractions}/>
+                    <p className="text-xs text-gray-400 mt-1">📍 ตำแหน่งที่เจ้าของปักหมุดไว้</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="rounded-xl overflow-hidden border border-gray-100">
+                      <iframe
+                        title="แผนที่ที่พัก"
+                        width="100%" height="240" loading="lazy"
+                        style={{ border: 0 }}
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(listing.location)}&z=15&output=embed`}/>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">📍 ตำแหน่งโดยประมาณจากที่อยู่ที่ระบุ</p>
+                  </>
+                )}
               </div>
             )}
 
