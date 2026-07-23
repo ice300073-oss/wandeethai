@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 type Pt = { lat: number; lng: number }
 type Attraction = { id: string; name: string; emoji?: string; lat: number; lng: number }
 
+const COLORS = ['#f97316', '#0ea5e9', '#22c55e', '#a855f7', '#ef4444', '#eab308', '#ec4899', '#14b8a6']
+
 // โหลด Leaflet จาก CDN ตอนรัน (ไม่ต้องเพิ่ม dependency / ไม่มีปัญหา SSR)
 let leafletPromise: Promise<any> | null = null
 function loadLeaflet(): Promise<any> {
@@ -27,7 +29,6 @@ function loadLeaflet(): Promise<any> {
   return leafletPromise
 }
 
-// ระยะทางเส้นตรง (กม.) — ใช้โชว์คร่าวๆ ในรายการ
 function haversine(a: Pt, b: Pt): number {
   const R = 6371, toRad = (d: number) => d * Math.PI / 180
   const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng)
@@ -38,10 +39,10 @@ function haversine(a: Pt, b: Pt): number {
 export default function TripMap({ center, title, attractions }: { center: Pt; title: string; attractions: Attraction[] }) {
   const mapEl = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
-  const routeRef = useRef<any>(null)
+  const layersRef = useRef<Record<string, any>>({})   // attractionId -> polyline layer
   const [ready, setReady] = useState(false)
-  const [loadingRoute, setLoadingRoute] = useState<string | null>(null)
-  const [activeRoute, setActiveRoute] = useState<{ id: string; km: number; min: number } | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)          // id ที่กำลังโหลด (หรือ 'all')
+  const [routes, setRoutes] = useState<Record<string, { km: number; min: number; color: string }>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -49,9 +50,7 @@ export default function TripMap({ center, title, attractions }: { center: Pt; ti
       if (cancelled || !mapEl.current || mapRef.current) return
       const map = L.map(mapEl.current, { scrollWheelZoom: false }).setView([center.lat, center.lng], 14)
       mapRef.current = map
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19, attribution: '© OpenStreetMap',
-      }).addTo(map)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map)
 
       L.marker([center.lat, center.lng], {
         icon: L.divIcon({ html: `<div class="tm-pin tm-home">🏠</div>`, className: '', iconSize: [40, 40], iconAnchor: [20, 20] }),
@@ -70,25 +69,50 @@ export default function TripMap({ center, title, attractions }: { center: Pt; ti
     return () => { cancelled = true; if (mapRef.current) { mapRef.current.remove(); mapRef.current = null } }
   }, [])
 
-  const showRoute = async (a: Attraction) => {
+  const drawRoute = async (a: Attraction, color: string) => {
     const L = (window as any).L
-    if (!L || !mapRef.current) return
-    setLoadingRoute(a.id)
-    try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${center.lng},${center.lat};${a.lng},${a.lat}?overview=full&geometries=geojson`
-      const json = await (await fetch(url)).json()
-      const route = json.routes?.[0]
-      if (routeRef.current) { mapRef.current.removeLayer(routeRef.current); routeRef.current = null }
-      if (route) {
-        const latlngs = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]])
-        const line = L.polyline(latlngs, { color: '#f97316', weight: 5, opacity: 0.95, className: 'tm-flow' }).addTo(mapRef.current)
-        routeRef.current = line
-        mapRef.current.fitBounds(line.getBounds(), { padding: [40, 40] })
-        setActiveRoute({ id: a.id, km: route.distance / 1000, min: Math.round(route.duration / 60) })
-      }
-    } catch { /* ignore */ }
-    setLoadingRoute(null)
+    if (!L || !mapRef.current || layersRef.current[a.id]) return
+    const url = `https://router.project-osrm.org/route/v1/driving/${center.lng},${center.lat};${a.lng},${a.lat}?overview=full&geometries=geojson`
+    const json = await (await fetch(url)).json()
+    const route = json.routes?.[0]
+    if (!route) return
+    const latlngs = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]])
+    const line = L.polyline(latlngs, { color, weight: 5, opacity: 0.95, className: 'tm-flow' }).addTo(mapRef.current)
+    layersRef.current[a.id] = line
+    setRoutes((r) => ({ ...r, [a.id]: { km: route.distance / 1000, min: Math.round(route.duration / 60), color } }))
   }
+
+  const removeRoute = (id: string) => {
+    if (layersRef.current[id]) { mapRef.current.removeLayer(layersRef.current[id]); delete layersRef.current[id] }
+    setRoutes((r) => { const n = { ...r }; delete n[id]; return n })
+  }
+
+  const colorOf = (a: Attraction) => COLORS[attractions.findIndex((x) => x.id === a.id) % COLORS.length]
+
+  const toggle = async (a: Attraction) => {
+    if (layersRef.current[a.id]) { removeRoute(a.id); return }
+    setBusy(a.id)
+    try { await drawRoute(a, colorOf(a)) } catch {}
+    setBusy(null)
+  }
+
+  const showAll = async () => {
+    setBusy('all')
+    try { await Promise.all(attractions.filter((a) => !layersRef.current[a.id]).map((a) => drawRoute(a, colorOf(a)))) } catch {}
+    // ซูมให้เห็นทุกเส้น
+    const L = (window as any).L
+    const layers = Object.values(layersRef.current)
+    if (L && layers.length && mapRef.current) {
+      let b = L.latLngBounds([[center.lat, center.lng]])
+      layers.forEach((l: any) => { b = b.extend(l.getBounds()) })
+      mapRef.current.fitBounds(b, { padding: [40, 40] })
+    }
+    setBusy(null)
+  }
+
+  const clearAll = () => { Object.keys(layersRef.current).forEach(removeRoute) }
+
+  const anyRoute = Object.keys(routes).length > 0
 
   return (
     <div>
@@ -105,23 +129,39 @@ export default function TripMap({ center, title, attractions }: { center: Pt; ti
       </div>
 
       {attractions.length > 0 && (
-        <div className="mt-3 space-y-1.5">
-          <p className="text-xs text-gray-400">🚗 กดดูเส้นทางจากที่พักไปแต่ละจุด</p>
-          {attractions.map((a) => {
-            const km = haversine(center, a)
-            const active = activeRoute?.id === a.id
-            return (
-              <div key={a.id} className="flex items-center gap-2 text-sm bg-white border border-gray-100 rounded-lg px-3 py-2">
-                <span className="text-lg">{a.emoji || '📍'}</span>
-                <span className="flex-1 text-gray-700 truncate">{a.name}</span>
-                <span className="text-gray-400 text-xs whitespace-nowrap">~{km.toFixed(1)} กม.</span>
-                <button onClick={() => showRoute(a)} disabled={loadingRoute === a.id}
-                  className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap ${active ? 'bg-orange-500 text-white' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`}>
-                  {loadingRoute === a.id ? 'กำลังหา...' : active ? `${activeRoute!.km.toFixed(1)} กม. · ${activeRoute!.min} นาที` : 'ดูเส้นทาง'}
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-gray-400">🚗 เส้นทางจากที่พักไปแต่ละจุด</p>
+            <div className="flex gap-2">
+              <button onClick={showAll} disabled={busy === 'all'}
+                className="text-xs px-3 py-1.5 rounded-full bg-orange-500 text-white font-medium hover:bg-orange-600 disabled:opacity-50">
+                {busy === 'all' ? 'กำลังหา...' : '✨ แสดงทั้งหมด'}
+              </button>
+              {anyRoute && (
+                <button onClick={clearAll} className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50">
+                  ล้าง
                 </button>
-              </div>
-            )
-          })}
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            {attractions.map((a) => {
+              const km = haversine(center, a)
+              const r = routes[a.id]
+              return (
+                <div key={a.id} className="flex items-center gap-2 text-sm bg-white border border-gray-100 rounded-lg px-3 py-2">
+                  {r ? <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: r.color }}/> : <span className="text-lg">{a.emoji || '📍'}</span>}
+                  <span className="flex-1 text-gray-700 truncate">{a.name}</span>
+                  <span className="text-gray-400 text-xs whitespace-nowrap">~{km.toFixed(1)} กม.</span>
+                  <button onClick={() => toggle(a)} disabled={busy === a.id}
+                    className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap ${r ? 'bg-orange-500 text-white' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`}>
+                    {busy === a.id ? 'กำลังหา...' : r ? `${r.km.toFixed(1)} กม. · ${r.min} นาที` : 'ดูเส้นทาง'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
