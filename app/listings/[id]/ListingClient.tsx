@@ -284,6 +284,30 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
               </div>
             )}
 
+            {/* แผนที่ (ฝังจากชื่อสถานที่ ไม่ต้องใช้ API key) */}
+            {listing.location && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-gray-800">แผนที่</h3>
+                  <a
+                    href={`https://www.google.com/maps/search/${encodeURIComponent(listing.title + ' ' + listing.location)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-orange-500 text-sm hover:underline">
+                    เปิดใน Google Maps ↗
+                  </a>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-gray-100">
+                  <iframe
+                    title="แผนที่ที่พัก"
+                    width="100%" height="240" loading="lazy"
+                    style={{ border: 0 }}
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(listing.location)}&z=15&output=embed`}/>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">📍 ตำแหน่งโดยประมาณจากที่อยู่ที่ระบุ</p>
+              </div>
+            )}
+
             <div className="mb-6">
               <span className={`inline-block px-3 py-1 rounded-full text-sm ${listing.is_available ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-400'}`}>
                 {listing.is_available ? '✓ ว่างให้จอง' : '✗ ไม่ว่าง'}
