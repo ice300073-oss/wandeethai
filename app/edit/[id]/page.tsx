@@ -1,5 +1,6 @@
 'use client'
 import SiteName from '@/components/SiteName'
+import LocationPicker from '@/components/LocationPicker'
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -24,6 +25,7 @@ const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-3 text-sm f
 export default function EditListing({ params }: { params: { id: string } }) {
   const [authChecked, setAuthChecked] = useState(false)
   const [allowed, setAllowed] = useState(false)
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [form, setForm] = useState<any>({
     title: '', description: '', category: '', price_per_day: '',
     location: '', min_stay_days: '', max_guests: '', bedrooms: '', bathrooms: '',
@@ -51,6 +53,7 @@ export default function EditListing({ params }: { params: { id: string } }) {
         is_available: l.is_available,
       })
       setAmenities(d.amenities || [])
+      if (typeof l.lat === 'number' && typeof l.lng === 'number') setCoords({ lat: l.lat, lng: l.lng })
       setAllowed(true); setAuthChecked(true)
     }
     load()
@@ -79,6 +82,8 @@ export default function EditListing({ params }: { params: { id: string } }) {
       category: form.category,
       price_per_day: form.price_per_day ? Number(form.price_per_day) : null,
       location: form.location,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
       min_stay_days: form.min_stay_days ? Number(form.min_stay_days) : null,
       max_guests: form.max_guests ? Number(form.max_guests) : null,
       is_available: form.is_available,
@@ -181,6 +186,10 @@ export default function EditListing({ params }: { params: { id: string } }) {
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">จังหวัด / สถานที่</label>
             <input name="location" value={form.location} onChange={handleChange} className={inputClass}/>
+          </div>
+
+          <div>
+            <LocationPicker value={coords} onChange={setCoords}/>
           </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">

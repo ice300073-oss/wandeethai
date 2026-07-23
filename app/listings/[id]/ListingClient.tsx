@@ -290,7 +290,11 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-gray-800">แผนที่</h3>
                   <a
-                    href={`https://www.google.com/maps/search/${encodeURIComponent(listing.title + ' ' + listing.location)}`}
+                    href={
+                      (typeof listing.lat === 'number' && typeof listing.lng === 'number')
+                        ? `https://www.google.com/maps/search/?api=1&query=${listing.lat},${listing.lng}`
+                        : `https://www.google.com/maps/search/${encodeURIComponent(listing.title + ' ' + listing.location)}`
+                    }
                     target="_blank" rel="noopener noreferrer"
                     className="text-orange-500 text-sm hover:underline">
                     เปิดใน Google Maps ↗
@@ -302,9 +306,17 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
                     width="100%" height="240" loading="lazy"
                     style={{ border: 0 }}
                     referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(listing.location)}&z=15&output=embed`}/>
+                    src={
+                      (typeof listing.lat === 'number' && typeof listing.lng === 'number')
+                        ? `https://maps.google.com/maps?q=${listing.lat},${listing.lng}&z=17&output=embed`
+                        : `https://maps.google.com/maps?q=${encodeURIComponent(listing.location)}&z=15&output=embed`
+                    }/>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">📍 ตำแหน่งโดยประมาณจากที่อยู่ที่ระบุ</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {(typeof listing.lat === 'number' && typeof listing.lng === 'number')
+                    ? '📍 ตำแหน่งที่เจ้าของปักหมุดไว้'
+                    : '📍 ตำแหน่งโดยประมาณจากที่อยู่ที่ระบุ'}
+                </p>
               </div>
             )}
 

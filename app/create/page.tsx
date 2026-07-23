@@ -4,6 +4,7 @@ import SiteName from '@/components/SiteName'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { isProfileCompleteForHosting, missingProfileFields, displayName } from '@/lib/profile'
+import LocationPicker from '@/components/LocationPicker'
 
 const categories = [
   { value: 'homestay', label: '🏡 โฮมสเตย์' },
@@ -37,6 +38,7 @@ export default function CreateListing() {
     bedrooms: '',
     bathrooms: '',
   })
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [images, setImages] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -148,6 +150,8 @@ export default function CreateListing() {
       min_stay_days: form.min_stay_days ? Number(form.min_stay_days) : null,
       max_guests: form.max_guests ? Number(form.max_guests) : null,
       location: form.location,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
       is_available: true,
       owner_id: user.id,
       images: imageUrls,
@@ -273,6 +277,8 @@ export default function CreateListing() {
             <input name="location" value={form.location} onChange={handleChange}
               placeholder="เชียงใหม่, ภูเก็ต, กรุงเทพฯ..." className={inputClass}/>
           </div>
+
+          <LocationPicker value={coords} onChange={setCoords}/>
 
           <div>
             <label className="text-sm font-medium text-gray-700 mb-2 block">
