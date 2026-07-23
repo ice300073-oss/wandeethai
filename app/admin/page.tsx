@@ -4,6 +4,7 @@ import SiteName from '@/components/SiteName'
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ADMIN_EMAILS } from '@/lib/profile'
+import { parseLatLng } from '@/components/LocationPicker'
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
@@ -14,7 +15,9 @@ export default function AdminPage() {
   const [settings, setSettings] = useState<any>({})
   const [savingSettings, setSavingSettings] = useState(false)
   const [reports, setReports] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings' | 'hosts' | 'settings' | 'reports'>('overview')
+  const [attractions, setAttractions] = useState<any[]>([])
+  const [newAttr, setNewAttr] = useState({ name: '', emoji: '📍', coords: '' })
+  const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'bookings' | 'hosts' | 'settings' | 'reports' | 'attractions'>('overview')
   const [loading, setLoading] = useState(true)
 
   const loadData = useCallback(async () => {
@@ -38,6 +41,10 @@ export default function AdminPage() {
       .from('reports').select('*, listings(title)').order('created_at', { ascending: false })
     setReports(reportData || [])
 
+    const { data: attrData } = await supabase
+      .from('attractions').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+    setAttractions(attrData || [])
+
     setLoading(false)
   }, [])
 
@@ -60,6 +67,7 @@ export default function AdminPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attractions' }, () => loadData())
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [loadData])
@@ -110,6 +118,24 @@ export default function AdminPage() {
   const setReportStatus = async (id: string, status: string) => {
     await supabase.from('reports').update({ status }).eq('id', id)
     setReports(reports.map(r => r.id === id ? { ...r, status } : r))
+  }
+
+  const addAttraction = async () => {
+    if (!newAttr.name.trim()) { alert('ใส่ชื่อจุดเที่ยวก่อน'); return }
+    const c = parseLatLng(newAttr.coords)
+    if (!c) { alert('พิกัดไม่ถูกต้อง — วางพิกัดแบบ 12.6789, 100.9012 หรือลิงก์ Google Maps'); return }
+    const { data, error } = await supabase.from('attractions')
+      .insert([{ name: newAttr.name.trim(), emoji: newAttr.emoji || '📍', lat: c.lat, lng: c.lng }])
+      .select().single()
+    if (error) { alert('เพิ่มไม่สำเร็จ: ' + error.message); return }
+    if (data) setAttractions([...attractions, data])
+    setNewAttr({ name: '', emoji: '📍', coords: '' })
+  }
+
+  const deleteAttraction = async (id: string) => {
+    if (!window.confirm('ลบจุดนี้?')) return
+    await supabase.from('attractions').delete().eq('id', id)
+    setAttractions(attractions.filter(a => a.id !== id))
   }
 
   const openReportsCount = reports.filter(r => r.status === 'open' || !r.status).length
@@ -226,6 +252,7 @@ export default function AdminPage() {
             { key: 'bookings', label: 'การจอง' },
             { key: 'hosts', label: 'เจ้าของ' },
             { key: 'reports', label: `🚩 แจ้งปัญหา${openReportsCount > 0 ? ` (${openReportsCount})` : ''}` },
+            { key: 'attractions', label: '🗺️ จุดเที่ยว' },
             { key: 'settings', label: '⚙️ ตั้งค่าเว็บ' },
           ].map((tab) => (
             <button key={tab.key}
@@ -365,6 +392,50 @@ export default function AdminPage() {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Tab: จุดเที่ยว (สำหรับแผนที่เส้นทาง) */}
+        {activeTab === 'attractions' && (
+          <div className="max-w-2xl space-y-5">
+            <div className="bg-white rounded-xl border border-gray-100 p-5">
+              <h3 className="font-semibold text-gray-800 mb-1">เพิ่มจุดเที่ยว / จุดปักหมุด</h3>
+              <p className="text-xs text-gray-400 mb-4">จุดพวกนี้จะขึ้นบนแผนที่เส้นทางในหน้าที่พัก (บอกระยะทางจากที่พัก)</p>
+              <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
+                <input value={newAttr.emoji} onChange={(e) => setNewAttr({ ...newAttr, emoji: e.target.value })}
+                  placeholder="📍" maxLength={4}
+                  className="border border-gray-200 rounded-lg px-3 py-3 text-center text-lg bg-white"/>
+                <input value={newAttr.name} onChange={(e) => setNewAttr({ ...newAttr, name: e.target.value })}
+                  placeholder="ชื่อจุดเที่ยว เช่น หาดนางรอง"
+                  className="border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400"/>
+              </div>
+              <input value={newAttr.coords} onChange={(e) => setNewAttr({ ...newAttr, coords: e.target.value })}
+                placeholder="วางพิกัด 12.6789, 100.9012 หรือลิงก์ Google Maps"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:border-orange-400 mb-2"/>
+              <p className="text-xs text-gray-400 mb-3">หาพิกัด: เปิด Google Maps → กดค้าง/คลิกขวาที่จุด → ก็อปพิกัดมาวาง</p>
+              <button onClick={addAttraction}
+                className="bg-orange-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600">
+                + เพิ่มจุดเที่ยว
+              </button>
+            </div>
+
+            {attractions.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50">
+                {attractions.map((a) => (
+                  <div key={a.id} className="flex items-center gap-3 p-4">
+                    <span className="text-2xl">{a.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-800">{a.name}</p>
+                      <p className="text-xs text-gray-400">{a.lat?.toFixed(5)}, {a.lng?.toFixed(5)}</p>
+                    </div>
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lng}`} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-orange-500 hover:underline shrink-0">ดูแผนที่</a>
+                    <button onClick={() => deleteAttraction(a.id)}
+                      className="text-xs text-red-400 hover:text-red-600 shrink-0">ลบ</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
