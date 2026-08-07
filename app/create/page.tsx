@@ -30,6 +30,11 @@ export default function CreateListing() {
     max_guests: '',
     bedrooms: '',
     bathrooms: '',
+    rent_monthly: '',
+    common_fee: '',
+    water_rate: '',
+    electric_rate: '',
+    deposit_months: '2',
   })
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
@@ -96,15 +101,18 @@ export default function CreateListing() {
   }
 
   const categories = categoriesForMode(form.mode as any)
+  const isRent = form.mode === 'rent'
   const isGuide = form.category === 'guide'
-  const isAccommodation = !!form.category && !isGuide
+  const isAccommodation = !!form.category && !isGuide && !isRent
 
   const handleSubmit = async () => {
     if (!form.title || !form.category) {
       setMessage('❌ กรุณากรอกชื่อประกาศและเลือกหมวดหมู่')
       return
     }
-    if (!form.price_per_day) {
+    if (isRent) {
+      if (!form.rent_monthly) { setMessage('❌ กรุณากรอกค่าเช่า/เดือน'); return }
+    } else if (!form.price_per_day) {
       setMessage(isGuide ? '❌ กรุณากรอกราคา/วัน' : '❌ กรุณากรอกราคา/คืน')
       return
     }
@@ -129,22 +137,28 @@ export default function CreateListing() {
 
     const details: Record<string, any> = {}
     if (selectedAmenities.length > 0) details.amenities = selectedAmenities
-    if (isAccommodation) {
-      if (form.bedrooms) details.bedrooms = Number(form.bedrooms)
-      if (form.bathrooms) details.bathrooms = Number(form.bathrooms)
-    }
+    if (form.bedrooms) details.bedrooms = Number(form.bedrooms)
+    if (form.bathrooms) details.bathrooms = Number(form.bathrooms)
+
+    const num = (v: string) => (v !== '' && v != null ? Number(v) : null)
 
     const { error } = await supabase.from('listings').insert([{
       title: form.title,
       description: form.description,
       category: form.category,
-      price_per_day: form.price_per_day ? Number(form.price_per_day) : null,
+      price_per_day: isRent ? null : (form.price_per_day ? Number(form.price_per_day) : null),
       price_per_month: null,
-      rental_type: 'daily',
+      rental_type: isRent ? 'monthly' : 'daily',
       min_stay_days: form.min_stay_days ? Number(form.min_stay_days) : null,
       max_guests: form.max_guests ? Number(form.max_guests) : null,
       location: form.location,
       mode: form.mode,
+      // ฟิลด์โหมดเช่ารายเดือน
+      rent_monthly: isRent ? num(form.rent_monthly) : null,
+      deposit_months: isRent ? (num(form.deposit_months) ?? 2) : null,
+      common_fee: isRent ? num(form.common_fee) : null,
+      water_rate: isRent ? num(form.water_rate) : null,
+      electric_rate: isRent ? num(form.electric_rate) : null,
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
       is_available: true,
@@ -225,6 +239,46 @@ export default function CreateListing() {
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">รองรับสูงสุด (คน)</label>
                   <input name="max_guests" type="number" value={form.max_guests} onChange={handleChange} placeholder="2" className={inputClass}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">ห้องนอน</label>
+                  <input name="bedrooms" type="number" value={form.bedrooms} onChange={handleChange} placeholder="1" className={inputClass}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">ห้องน้ำ</label>
+                  <input name="bathrooms" type="number" value={form.bathrooms} onChange={handleChange} placeholder="1" className={inputClass}/>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isRent && !!form.category && (
+            <div className="bg-orange-50 rounded-xl p-4 space-y-4">
+              <p className="text-sm font-semibold text-orange-600">🏠 ข้อมูลเช่ารายเดือน</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">ค่าเช่า/เดือน (฿) *</label>
+                  <input name="rent_monthly" type="number" value={form.rent_monthly} onChange={handleChange} placeholder="4000" className={inputClass}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">มัดจำ (กี่เดือน)</label>
+                  <input name="deposit_months" type="number" value={form.deposit_months} onChange={handleChange} placeholder="2" className={inputClass}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">ค่าส่วนกลาง/เดือน (฿)</label>
+                  <input name="common_fee" type="number" value={form.common_fee} onChange={handleChange} placeholder="0" className={inputClass}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">รองรับสูงสุด (คน)</label>
+                  <input name="max_guests" type="number" value={form.max_guests} onChange={handleChange} placeholder="2" className={inputClass}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">ค่าน้ำ (฿/หน่วย หรือเหมา)</label>
+                  <input name="water_rate" type="number" value={form.water_rate} onChange={handleChange} placeholder="18" className={inputClass}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">ค่าไฟ (฿/หน่วย)</label>
+                  <input name="electric_rate" type="number" value={form.electric_rate} onChange={handleChange} placeholder="8" className={inputClass}/>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">ห้องนอน</label>

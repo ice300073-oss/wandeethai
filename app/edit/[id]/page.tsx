@@ -22,6 +22,7 @@ export default function EditListing({ params }: { params: { id: string } }) {
     mode: 'stay',
     title: '', description: '', category: '', price_per_day: '',
     location: '', min_stay_days: '', max_guests: '', bedrooms: '', bathrooms: '',
+    rent_monthly: '', common_fee: '', water_rate: '', electric_rate: '', deposit_months: '2',
     is_available: true,
   })
   const [amenities, setAmenities] = useState<string[]>([])
@@ -44,6 +45,9 @@ export default function EditListing({ params }: { params: { id: string } }) {
         price_per_day: l.price_per_day ?? '', location: l.location || '',
         min_stay_days: l.min_stay_days ?? '', max_guests: l.max_guests ?? '',
         bedrooms: d.bedrooms ?? '', bathrooms: d.bathrooms ?? '',
+        rent_monthly: l.rent_monthly ?? '', common_fee: l.common_fee ?? '',
+        water_rate: l.water_rate ?? '', electric_rate: l.electric_rate ?? '',
+        deposit_months: l.deposit_months ?? '2',
         is_available: l.is_available,
       })
       setAmenities(d.amenities || [])
@@ -58,26 +62,32 @@ export default function EditListing({ params }: { params: { id: string } }) {
     setAmenities(prev => prev.includes(item) ? prev.filter(a => a !== item) : [...prev, item])
 
   const categories = categoriesForMode(form.mode as any)
+  const isRent = form.mode === 'rent'
   const isGuide = form.category === 'guide'
 
   const handleSave = async () => {
-    if (!form.title || !form.price_per_day) {
-      setMessage('❌ กรุณากรอกชื่อและราคา'); return
+    if (!form.title) { setMessage('❌ กรุณากรอกชื่อ'); return }
+    if (isRent ? !form.rent_monthly : !form.price_per_day) {
+      setMessage(isRent ? '❌ กรุณากรอกค่าเช่า/เดือน' : '❌ กรุณากรอกราคา'); return
     }
     setLoading(true)
     const details: Record<string, any> = {}
     if (amenities.length > 0) details.amenities = amenities
-    if (!isGuide) {
-      if (form.bedrooms) details.bedrooms = Number(form.bedrooms)
-      if (form.bathrooms) details.bathrooms = Number(form.bathrooms)
-    }
+    if (form.bedrooms) details.bedrooms = Number(form.bedrooms)
+    if (form.bathrooms) details.bathrooms = Number(form.bathrooms)
+    const num = (v: string) => (v !== '' && v != null ? Number(v) : null)
     const { error } = await supabase.from('listings').update({
       title: form.title,
       description: form.description,
       category: form.category,
-      price_per_day: form.price_per_day ? Number(form.price_per_day) : null,
+      price_per_day: isRent ? null : (form.price_per_day ? Number(form.price_per_day) : null),
       location: form.location,
       mode: form.mode,
+      rent_monthly: isRent ? num(form.rent_monthly) : null,
+      deposit_months: isRent ? (num(form.deposit_months) ?? 2) : null,
+      common_fee: isRent ? num(form.common_fee) : null,
+      water_rate: isRent ? num(form.water_rate) : null,
+      electric_rate: isRent ? num(form.electric_rate) : null,
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
       min_stay_days: form.min_stay_days ? Number(form.min_stay_days) : null,
@@ -142,6 +152,44 @@ export default function EditListing({ params }: { params: { id: string } }) {
             </select>
           </div>
 
+          {isRent && (
+            <div className="grid grid-cols-2 gap-4 bg-orange-50 rounded-xl p-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">ค่าเช่า/เดือน (฿) *</label>
+                <input name="rent_monthly" type="number" value={form.rent_monthly} onChange={handleChange} className={inputClass}/>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">มัดจำ (กี่เดือน)</label>
+                <input name="deposit_months" type="number" value={form.deposit_months} onChange={handleChange} className={inputClass}/>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">ค่าส่วนกลาง/เดือน (฿)</label>
+                <input name="common_fee" type="number" value={form.common_fee} onChange={handleChange} className={inputClass}/>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">รองรับสูงสุด (คน)</label>
+                <input name="max_guests" type="number" value={form.max_guests} onChange={handleChange} className={inputClass}/>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">ค่าน้ำ (฿/หน่วย)</label>
+                <input name="water_rate" type="number" value={form.water_rate} onChange={handleChange} className={inputClass}/>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">ค่าไฟ (฿/หน่วย)</label>
+                <input name="electric_rate" type="number" value={form.electric_rate} onChange={handleChange} className={inputClass}/>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">ห้องนอน</label>
+                <input name="bedrooms" type="number" value={form.bedrooms} onChange={handleChange} className={inputClass}/>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">ห้องน้ำ</label>
+                <input name="bathrooms" type="number" value={form.bathrooms} onChange={handleChange} className={inputClass}/>
+              </div>
+            </div>
+          )}
+
+          {!isRent && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">{isGuide ? 'ราคา/วัน (฿) *' : 'ราคา/คืน (฿) *'}</label>
@@ -168,6 +216,7 @@ export default function EditListing({ params }: { params: { id: string } }) {
               </>
             )}
           </div>
+          )}
 
           {!isGuide && (
             <div>

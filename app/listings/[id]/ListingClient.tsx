@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import TripMap from '@/components/TripMap'
 import { CATEGORY_LABELS } from '@/lib/mode'
+import RentInfo from '@/components/RentInfo'
 
 export default function ListingDetail({ params }: { params: { id: string } }) {
   const [listing, setListing] = useState<any>(null)
@@ -153,6 +154,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
 
   const getPriceDisplay = () => {
     if (!listing) return null
+    if (listing.mode === 'rent') return <RentInfo listing={listing}/>
     const unit = listing.category === 'guide' ? ' / วัน' : ' / คืน'
     const price = listing.price_per_day ?? listing.price_per_month
     return (

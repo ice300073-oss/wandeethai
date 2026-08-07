@@ -174,12 +174,12 @@ export default function Home() {
     const priceRange = PRICE_RANGES[selectedPrice]
     if (priceRange && (priceRange.min > 0 || priceRange.max !== Infinity)) {
       result = result.filter(l => {
-        const price = l.price_per_day ?? l.price_per_month ?? 0
+        const price = l.rent_monthly ?? l.price_per_day ?? l.price_per_month ?? 0
         return price >= priceRange.min && price <= priceRange.max
       })
     }
     // เรียงผลลัพธ์
-    const getPrice = (l: any) => l.price_per_day ?? l.price_per_month ?? 0
+    const getPrice = (l: any) => l.rent_monthly ?? l.price_per_day ?? l.price_per_month ?? 0
     result = [...result]
     if (sortBy === 'price_asc') result.sort((a, b) => getPrice(a) - getPrice(b))
     else if (sortBy === 'price_desc') result.sort((a, b) => getPrice(b) - getPrice(a))
@@ -205,6 +205,14 @@ export default function Home() {
   }
 
   const getPriceLabel = (item: any) => {
+    if (item.mode === 'rent') {
+      return (
+        <p className="text-orange-500 font-bold mt-2 text-lg">
+          ฿{Number(item.rent_monthly || 0).toLocaleString()}
+          <span className="text-gray-400 font-normal text-sm"> / เดือน</span>
+        </p>
+      )
+    }
     const unit = item.category === 'guide' ? ' / วัน' : ' / คืน'
     const price = item.price_per_day ?? item.price_per_month
     return (
