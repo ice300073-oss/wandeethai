@@ -4,15 +4,7 @@ import LocationPicker from '@/components/LocationPicker'
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-
-const categories = [
-  { value: 'homestay', label: '🏡 โฮมสเตย์' },
-  { value: 'villa', label: '🏖️ พูลวิลล่า' },
-  { value: 'hotel', label: '🏨 โรงแรม' },
-  { value: 'resort', label: '🌿 รีสอร์ท' },
-  { value: 'guesthouse', label: '🎒 เกสต์เฮาส์' },
-  { value: 'guide', label: '🗺️ ไกด์ท้องถิ่น' },
-]
+import { categoriesForMode } from '@/lib/mode'
 
 const ACCOMMODATION_AMENITIES = [
   'WiFi', 'เครื่องปรับอากาศ', 'สระว่ายน้ำ', 'ที่จอดรถ', 'ครัว',
@@ -65,6 +57,7 @@ export default function EditListing({ params }: { params: { id: string } }) {
   const toggleAmenity = (item: string) =>
     setAmenities(prev => prev.includes(item) ? prev.filter(a => a !== item) : [...prev, item])
 
+  const categories = categoriesForMode(form.mode as any)
   const isGuide = form.category === 'guide'
 
   const handleSave = async () => {

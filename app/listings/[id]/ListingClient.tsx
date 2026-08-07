@@ -4,6 +4,7 @@ import SiteName from '@/components/SiteName'
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import TripMap from '@/components/TripMap'
+import { CATEGORY_LABELS } from '@/lib/mode'
 
 export default function ListingDetail({ params }: { params: { id: string } }) {
   const [listing, setListing] = useState<any>(null)
@@ -148,14 +149,7 @@ export default function ListingDetail({ params }: { params: { id: string } }) {
     if (!error) setComments((prev) => prev.filter((c: any) => c.id !== commentId))
   }
 
-  const categoryLabel: Record<string, string> = {
-    homestay: '🏡 โฮมสเตย์',
-    villa: '🏖️ พูลวิลล่า',
-    hotel: '🏨 โรงแรม',
-    resort: '🌿 รีสอร์ท',
-    guesthouse: '🎒 เกสต์เฮาส์',
-    guide: '🗺️ ไกด์ท้องถิ่น',
-  }
+  const categoryLabel = CATEGORY_LABELS
 
   const getPriceDisplay = () => {
     if (!listing) return null

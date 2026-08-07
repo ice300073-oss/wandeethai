@@ -4,16 +4,8 @@ import SiteName from '@/components/SiteName'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { isProfileCompleteForHosting, missingProfileFields, displayName } from '@/lib/profile'
+import { categoriesForMode } from '@/lib/mode'
 import LocationPicker from '@/components/LocationPicker'
-
-const categories = [
-  { value: 'homestay', label: '🏡 โฮมสเตย์' },
-  { value: 'villa', label: '🏖️ พูลวิลล่า' },
-  { value: 'hotel', label: '🏨 โรงแรม' },
-  { value: 'resort', label: '🌿 รีสอร์ท' },
-  { value: 'guesthouse', label: '🎒 เกสต์เฮาส์' },
-  { value: 'guide', label: '🗺️ ไกด์ท้องถิ่น' },
-]
 
 const ACCOMMODATION_AMENITIES = [
   'WiFi', 'เครื่องปรับอากาศ', 'สระว่ายน้ำ', 'ที่จอดรถ', 'ครัว',
@@ -103,6 +95,7 @@ export default function CreateListing() {
     setPreviews(files.map(f => URL.createObjectURL(f)))
   }
 
+  const categories = categoriesForMode(form.mode as any)
   const isGuide = form.category === 'guide'
   const isAccommodation = !!form.category && !isGuide
 
@@ -188,7 +181,7 @@ export default function CreateListing() {
             <label className="text-sm font-medium text-gray-700 mb-1 block">ประเภทประกาศ</label>
             <div className="grid grid-cols-2 gap-2">
               {[{ v: 'stay', label: '🏖️ ที่พักท่องเที่ยว (รายคืน)' }, { v: 'rent', label: '🏠 เช่ารายเดือน' }].map((o) => (
-                <button key={o.v} type="button" onClick={() => setForm({ ...form, mode: o.v })}
+                <button key={o.v} type="button" onClick={() => { setForm({ ...form, mode: o.v, category: '' }); setSelectedAmenities([]) }}
                   className={`py-3 rounded-lg text-sm font-medium border-2 transition-all ${form.mode === o.v ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-200 text-gray-500'}`}>
                   {o.label}
                 </button>
