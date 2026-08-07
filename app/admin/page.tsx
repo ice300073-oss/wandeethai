@@ -90,6 +90,7 @@ export default function AdminPage() {
   const saveSettings = async () => {
     setSavingSettings(true)
     const { error } = await supabase.from('site_settings').update({
+      enabled_modes: settings.enabled_modes || 'stay',
       site_name: settings.site_name,
       logo_url: settings.logo_url,
       theme_color: settings.theme_color,
@@ -443,6 +444,23 @@ export default function AdminPage() {
         {activeTab === 'settings' && (
           <div className="bg-white rounded-xl border border-gray-100 p-6 max-w-2xl space-y-5">
             <p className="text-sm text-gray-400">แก้ข้อความ/ข้อมูลเว็บได้เอง — กด "บันทึก" แล้วรีเฟรชหน้าแรก</p>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">🔀 โหมดเว็บ (2 แอปในเว็บเดียว)</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { v: 'stay', label: '🏖️ ท่องเที่ยว' },
+                  { v: 'rent', label: '🏠 เช่ารายเดือน' },
+                  { v: 'both', label: '🔀 ทั้งคู่ (สลับได้)' },
+                ].map((o) => (
+                  <button key={o.v} onClick={() => setS('enabled_modes', o.v)}
+                    className={`py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${(settings.enabled_modes || 'stay') === o.v ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-200 text-gray-500'}`}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">เลือก "ทั้งคู่" จะมีปุ่มสลับให้ผู้ใช้เลือกในหน้าเว็บ</p>
+            </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">🏷️ ชื่อเว็บ (โชว์ที่เมนูบนสุด)</label>

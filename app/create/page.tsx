@@ -28,6 +28,7 @@ export default function CreateListing() {
   const [user, setUser] = useState<any>(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [form, setForm] = useState({
+    mode: 'stay',
     title: '',
     description: '',
     category: '',
@@ -150,6 +151,7 @@ export default function CreateListing() {
       min_stay_days: form.min_stay_days ? Number(form.min_stay_days) : null,
       max_guests: form.max_guests ? Number(form.max_guests) : null,
       location: form.location,
+      mode: form.mode,
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
       is_available: true,
@@ -181,6 +183,18 @@ export default function CreateListing() {
         <p className="text-gray-400 mb-8">กรอกข้อมูลที่พักหรือบริการไกด์ของคุณ</p>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">ประเภทประกาศ</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[{ v: 'stay', label: '🏖️ ที่พักท่องเที่ยว (รายคืน)' }, { v: 'rent', label: '🏠 เช่ารายเดือน' }].map((o) => (
+                <button key={o.v} type="button" onClick={() => setForm({ ...form, mode: o.v })}
+                  className={`py-3 rounded-lg text-sm font-medium border-2 transition-all ${form.mode === o.v ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-200 text-gray-500'}`}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">

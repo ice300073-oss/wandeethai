@@ -27,6 +27,7 @@ export default function EditListing({ params }: { params: { id: string } }) {
   const [allowed, setAllowed] = useState(false)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [form, setForm] = useState<any>({
+    mode: 'stay',
     title: '', description: '', category: '', price_per_day: '',
     location: '', min_stay_days: '', max_guests: '', bedrooms: '', bathrooms: '',
     is_available: true,
@@ -46,6 +47,7 @@ export default function EditListing({ params }: { params: { id: string } }) {
       }
       const d = l.details || {}
       setForm({
+        mode: l.mode || 'stay',
         title: l.title || '', description: l.description || '', category: l.category || '',
         price_per_day: l.price_per_day ?? '', location: l.location || '',
         min_stay_days: l.min_stay_days ?? '', max_guests: l.max_guests ?? '',
@@ -82,6 +84,7 @@ export default function EditListing({ params }: { params: { id: string } }) {
       category: form.category,
       price_per_day: form.price_per_day ? Number(form.price_per_day) : null,
       location: form.location,
+      mode: form.mode,
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
       min_stay_days: form.min_stay_days ? Number(form.min_stay_days) : null,
@@ -123,6 +126,17 @@ export default function EditListing({ params }: { params: { id: string } }) {
         <p className="text-gray-400 mb-8">อัปเดตข้อมูลที่พักของคุณ</p>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">ประเภทประกาศ</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[{ v: 'stay', label: '🏖️ ที่พักท่องเที่ยว (รายคืน)' }, { v: 'rent', label: '🏠 เช่ารายเดือน' }].map((o) => (
+                <button key={o.v} type="button" onClick={() => setForm({ ...form, mode: o.v })}
+                  className={`py-3 rounded-lg text-sm font-medium border-2 transition-all ${form.mode === o.v ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-200 text-gray-500'}`}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">ชื่อประกาศ <span className="text-red-400">*</span></label>
             <input name="title" value={form.title} onChange={handleChange} className={inputClass}/>

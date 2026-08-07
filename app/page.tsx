@@ -4,6 +4,7 @@ import SiteName from '@/components/SiteName'
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { isProfileCompleteForHosting, isAdmin } from '@/lib/profile'
+import { getMode, setMode as saveMode, resolveMode, MODE_LABEL, type AppMode } from '@/lib/mode'
 import NotificationBell from '@/components/NotificationBell'
 
 const PROVINCES = [
@@ -80,6 +81,11 @@ export default function Home() {
   const [favIds, setFavIds] = useState<Set<string>>(new Set())
   const [needRole, setNeedRole] = useState(false)
   const [settings, setSettings] = useState<any>({})
+  const [appMode, setAppMode] = useState<AppMode>('stay')
+
+  useEffect(() => { setAppMode(getMode()) }, [])
+  const { mode, showSwitch } = resolveMode(settings.enabled_modes, appMode)
+  const switchMode = (m: AppMode) => { setAppMode(m); saveMode(m) }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -155,7 +161,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    let result = listings
+    let result = listings.filter(l => (l.mode || 'stay') === mode)
     if (search) {
       result = result.filter(l =>
         l.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -179,7 +185,7 @@ export default function Home() {
     else if (sortBy === 'price_desc') result.sort((a, b) => getPrice(b) - getPrice(a))
     else result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
     setFiltered(result)
-  }, [search, selectedCat, selectedProvince, selectedPrice, sortBy, listings])
+  }, [search, selectedCat, selectedProvince, selectedPrice, sortBy, listings, mode])
 
   const hasFilter = selectedCat || selectedProvince || selectedPrice > 0 || search
   const clearAll = () => { setSearch(''); setSelectedCat(''); setSelectedProvince(''); setSelectedPrice(0) }
@@ -315,6 +321,20 @@ export default function Home() {
           )}
         </div>
       </nav>
+
+      {/* ปุ่มสลับโหมด (B) — โผล่เฉพาะเว็บที่แอดมินเปิด 'both' */}
+      {showSwitch && (
+        <div className="bg-white border-b border-gray-100 px-6 py-2.5 flex justify-center">
+          <div className="inline-flex bg-gray-100 rounded-full p-1">
+            {(['stay', 'rent'] as AppMode[]).map((m) => (
+              <button key={m} onClick={() => switchMode(m)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${mode === m ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-500'}`}>
+                {MODE_LABEL[m]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* แถบประกาศ (ตั้งค่าได้จากแอดมิน) */}
       {settings.announcement && (
