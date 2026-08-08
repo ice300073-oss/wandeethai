@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { parseLatLng } from '@/components/LocationPicker'
 
 type Pt = { lat: number; lng: number }
 type Attraction = { id: string; name: string; emoji?: string; lat: number; lng: number }
@@ -43,6 +44,14 @@ export default function TripMap({ center, title, attractions }: { center: Pt; ti
   const [ready, setReady] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)          // id ที่กำลังโหลด (หรือ 'all')
   const [routes, setRoutes] = useState<Record<string, { km: number; min: number; color: string }>>({})
+
+  // จุดของผู้ที่มาดู (เช่น ที่ทำงาน) — วางพิกัดหรือชื่อสถานที่เอง
+  const customMarkerRef = useRef<any>(null)
+  const customRouteRef = useRef<any>(null)
+  const [customInput, setCustomInput] = useState('')
+  const [customBusy, setCustomBusy] = useState(false)
+  const [customErr, setCustomErr] = useState('')
+  const [customInfo, setCustomInfo] = useState<{ km: number; min: number } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -112,6 +121,42 @@ export default function TripMap({ center, title, attractions }: { center: Pt; ti
 
   const clearAll = () => { Object.keys(layersRef.current).forEach(removeRoute) }
 
+  // หาเส้นทางจากที่พักไป "จุดของผู้ใช้เอง" (พิกัด หรือ ชื่อสถานที่)
+  const addCustomPoint = async () => {
+    const L = (window as any).L
+    if (!L || !mapRef.current || !customInput.trim()) return
+    setCustomBusy(true); setCustomErr('')
+    try {
+      let pt = parseLatLng(customInput)
+      if (!pt) {
+        // ชื่อสถานที่ → พิกัด ผ่าน Nominatim (ฟรี) เน้นในไทย
+        const q = encodeURIComponent(customInput.trim())
+        const arr = await (await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=th&q=${q}`)).json()
+        if (arr && arr[0]) pt = { lat: parseFloat(arr[0].lat), lng: parseFloat(arr[0].lon) }
+      }
+      if (!pt) { setCustomErr('หาสถานที่ไม่เจอ ลองใส่ให้ละเอียดขึ้น หรือวางพิกัด'); setCustomBusy(false); return }
+
+      if (customMarkerRef.current) mapRef.current.removeLayer(customMarkerRef.current)
+      customMarkerRef.current = L.marker([pt.lat, pt.lng], {
+        icon: L.divIcon({ html: `<div class="tm-pin">📌</div>`, className: '', iconSize: [34, 34], iconAnchor: [17, 17] }),
+      }).addTo(mapRef.current).bindPopup('จุดของคุณ')
+
+      const url = `https://router.project-osrm.org/route/v1/driving/${center.lng},${center.lat};${pt.lng},${pt.lat}?overview=full&geometries=geojson`
+      const route = (await (await fetch(url)).json()).routes?.[0]
+      if (customRouteRef.current) mapRef.current.removeLayer(customRouteRef.current)
+      if (route) {
+        const latlngs = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]])
+        customRouteRef.current = L.polyline(latlngs, { color: '#0d9488', weight: 5, opacity: 0.95, className: 'tm-flow' }).addTo(mapRef.current)
+        mapRef.current.fitBounds(L.latLngBounds([[center.lat, center.lng], [pt.lat, pt.lng]]), { padding: [40, 40] })
+        setCustomInfo({ km: route.distance / 1000, min: Math.round(route.duration / 60) })
+      } else {
+        mapRef.current.setView([pt.lat, pt.lng], 14)
+        setCustomInfo(null)
+      }
+    } catch { setCustomErr('เกิดข้อผิดพลาด ลองใหม่') }
+    setCustomBusy(false)
+  }
+
   const anyRoute = Object.keys(routes).length > 0
 
   return (
@@ -126,6 +171,27 @@ export default function TripMap({ center, title, attractions }: { center: Pt; ti
 
       <div ref={mapEl} style={{ height: 300 }} className="rounded-xl overflow-hidden border border-gray-100 relative z-0 bg-gray-100">
         {!ready && <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">กำลังโหลดแผนที่...</div>}
+      </div>
+
+      {/* จุดของผู้ใช้เอง — เช่น ที่ทำงาน */}
+      <div className="mt-3 bg-teal-50 border border-teal-100 rounded-xl p-3">
+        <p className="text-xs font-medium text-teal-700 mb-2">🧭 เช็คระยะทางไปที่ทำงาน/จุดของคุณ</p>
+        <div className="flex gap-2">
+          <input
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addCustomPoint()}
+            placeholder="ใส่ชื่อสถานที่ เช่น นิคมอมตะซิตี้ ชลบุรี หรือวางพิกัด"
+            className="flex-1 border border-teal-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:border-teal-400"/>
+          <button onClick={addCustomPoint} disabled={customBusy || !customInput.trim()}
+            className="text-sm px-4 py-2 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 disabled:opacity-50 whitespace-nowrap">
+            {customBusy ? 'กำลังหา...' : 'หาเส้นทาง'}
+          </button>
+        </div>
+        {customErr && <p className="text-xs text-red-500 mt-1.5">{customErr}</p>}
+        {customInfo && (
+          <p className="text-sm text-teal-800 mt-2 font-medium">📌 จากที่พักถึงจุดของคุณ ≈ <b>{customInfo.km.toFixed(1)} กม.</b> · {customInfo.min} นาที</p>
+        )}
       </div>
 
       {attractions.length > 0 && (
