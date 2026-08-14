@@ -30,6 +30,13 @@ function loadLeaflet(): Promise<any> {
   return leafletPromise
 }
 
+// กัน XSS: escape ข้อความก่อนยัดเข้า HTML ของป๊อปอัพ Leaflet
+function esc(s: string): string {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string
+  ))
+}
+
 function haversine(a: Pt, b: Pt): number {
   const R = 6371, toRad = (d: number) => d * Math.PI / 180
   const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng)
@@ -63,13 +70,13 @@ export default function TripMap({ center, title, attractions }: { center: Pt; ti
 
       L.marker([center.lat, center.lng], {
         icon: L.divIcon({ html: `<div class="tm-pin tm-home">🏠</div>`, className: '', iconSize: [40, 40], iconAnchor: [20, 20] }),
-      }).addTo(map).bindPopup(`<b>${title}</b><br/>ที่พัก`)
+      }).addTo(map).bindPopup(`<b>${esc(title)}</b><br/>ที่พัก`)
 
       const pts: [number, number][] = [[center.lat, center.lng]]
       attractions.forEach((a) => {
         L.marker([a.lat, a.lng], {
           icon: L.divIcon({ html: `<div class="tm-pin">${a.emoji || '📍'}</div>`, className: '', iconSize: [34, 34], iconAnchor: [17, 17] }),
-        }).addTo(map).bindPopup(`<b>${a.name}</b>`)
+        }).addTo(map).bindPopup(`<b>${esc(a.name)}</b>`)
         pts.push([a.lat, a.lng])
       })
       if (pts.length > 1) map.fitBounds(pts, { padding: [40, 40] })
